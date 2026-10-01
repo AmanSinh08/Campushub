@@ -1,0 +1,6 @@
+{
+  "name": "CampusHub",
+  "description": "All-in-one student ecosystem for buying, selling, study resources, PYQ bank with AI explanations, and adaptive AI practice.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
