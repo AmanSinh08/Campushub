@@ -15,9 +15,12 @@ import {
   X,
   Compass,
   ChevronRight,
+  Bell,
+  Check,
 } from 'lucide-react';
 import { ActiveTab, StudentProfile } from '../types';
 import { CampusHubLogo } from './CampusHubLogo';
+import { getDynamicGreeting } from '../utils/greeting';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -37,6 +40,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenUploadModal,
 }) => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const dynamicGreeting = getDynamicGreeting(profile?.name);
 
   const navItems: { id: ActiveTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[] = [
     { id: 'overview', label: 'Overview', icon: Compass },
@@ -162,66 +168,83 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* TOP HEADER (Mobile & Desktop Top Bar) */}
       <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#E5E7EB] lg:pl-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          {/* Left: Mobile Brand & Menu trigger / Desktop Title */}
-          <div className="flex items-center gap-3">
+          {/* Left: Mobile Drawer Trigger & Greeting with subtitle */}
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-[#6B7280] hover:text-[#171717] hover:bg-[#F7F7F5] transition-colors"
+              className="lg:hidden p-2 rounded-xl text-[#6B7280] hover:text-[#171717] hover:bg-[#F7F7F5] transition-colors shrink-0"
               aria-label="Open Navigation Menu"
             >
               <Menu className="h-5 w-5" />
             </button>
 
-            <button
-              onClick={() => onNavigate('overview')}
-              className="lg:hidden flex items-center gap-2"
-            >
-              <CampusHubLogo size={30} glow={false} />
-              <span className="font-bold text-sm text-[#171717] font-sans">
-                Campus<span className="text-[#2563EB]">Hub</span>
-              </span>
-            </button>
-
-            <div className="hidden lg:flex items-center gap-2">
-              <span className="text-sm font-semibold text-[#171717] capitalize">
-                {navItems.find((n) => n.id === activeTab)?.label || 'Overview'}
-              </span>
-              <span className="text-xs text-[#6B7280]">
-                • {profile?.college ? profile.college.split(' ')[0] : 'Campus Community'}
-              </span>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-bold text-[#171717] tracking-tight leading-tight truncate">
+                {dynamicGreeting.fullGreeting}
+              </h1>
+              <p className="text-[11px] sm:text-xs text-[#6B7280] leading-tight truncate mt-0.5">
+                Ready to make today productive?
+              </p>
             </div>
           </div>
 
-          {/* Right: Quick Action Pill & Profile Trigger */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={onOpenNewListing}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#EFF6FF] text-[#2563EB] hover:bg-blue-100 text-xs font-semibold transition-colors"
-            >
-              <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-              <span>Post Listing</span>
-            </button>
+          {/* Right: Notification Bell & Small Circular Profile/Avatar */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 relative">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-xl text-[#6B7280] hover:text-[#171717] hover:bg-[#F7F7F5] border border-transparent hover:border-[#E5E7EB] transition-all"
+                title="Notifications"
+                aria-label="Campus notifications"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#2563EB] ring-2 ring-white"></span>
+              </button>
 
-            <button
-              onClick={onOpenUploadModal}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F7F7F5] text-[#171717] hover:bg-gray-200/80 border border-[#E5E7EB] text-xs font-medium transition-colors"
-            >
-              <UploadCloud className="h-3.5 w-3.5 text-[#2563EB]" />
-              <span>Share Notes</span>
-            </button>
+              {/* Notifications Popover */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-[#E5E7EB] shadow-xl p-3 z-50 animate-scale-in text-xs space-y-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB] px-1">
+                    <span className="font-bold text-[#171717]">Campus Updates</span>
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="text-[11px] text-[#2563EB] hover:underline font-semibold"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                  <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                    <div className="p-2 rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] space-y-0.5">
+                      <p className="font-semibold text-[#171717]">📚 Unit 4 Notes Uploaded</p>
+                      <p className="text-[11px] text-[#6B7280]">Differential Equations handwritten notes ready.</p>
+                      <p className="text-[10px] text-[#2563EB]">15 min ago</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] space-y-0.5">
+                      <p className="font-semibold text-[#171717]">🔥 5-Day Study Streak Active</p>
+                      <p className="text-[11px] text-[#6B7280]">Keep going — consistency beats cramming.</p>
+                      <p className="text-[10px] text-[#6B7280]">Today</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] space-y-0.5">
+                      <p className="font-semibold text-[#171717]">🛍️ Marketplace Listing Live</p>
+                      <p className="text-[11px] text-[#6B7280]">Your textbooks are visible to verified campus peers.</p>
+                      <p className="text-[10px] text-[#6B7280]">Yesterday</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
+            {/* Small circular profile/avatar */}
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F7F7F5] text-xs font-medium transition-all"
+              className="relative h-9 w-9 rounded-full bg-[#EFF6FF] border border-[#DBEAFE] text-[#2563EB] hover:ring-2 hover:ring-blue-400/40 transition-all font-bold text-xs flex items-center justify-center shrink-0 cursor-pointer shadow-2xs"
+              title={`Student Profile: ${profile?.name || 'Account'}`}
+              aria-label="Open student profile"
             >
-              <div className="h-6 w-6 rounded-lg bg-[#EFF6FF] text-[#2563EB] font-bold text-[11px] flex items-center justify-center">
-                {profile?.name ? profile.name.charAt(0).toUpperCase() : <User className="h-3.5 w-3.5" />}
-              </div>
-              <span className="hidden md:inline font-semibold text-[#171717] max-w-[120px] truncate">
-                {profile?.name || 'Account'}
-              </span>
+              <span>{profile?.name ? profile.name.charAt(0).toUpperCase() : 'S'}</span>
               {profile?.verified && (
-                <span className="hidden sm:inline-block w-2 h-2 rounded-full bg-[#16A34A]"></span>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#16A34A] ring-2 ring-white"></span>
               )}
             </button>
           </div>
