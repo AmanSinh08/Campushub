@@ -70,21 +70,65 @@ export const CampusHubLogo: React.FC<CampusHubLogoProps> = ({
           fill="url(#chLightGrad)"
         />
 
-        {/* Connected Campus Hub Geometric Nodes (Interlocking 'C' & 'H' / Campus Grid Network) */}
-        {/* Left Vertical Pillar */}
-        <rect x="25" y="26" width="13" height="48" rx="6.5" fill="#FFFFFF" />
+        {/* NEW MODERN CAMPUSHUB SYMBOL: Interconnected Campus Community & Student Hub */}
+        <g className="transition-transform duration-300">
+          {/* Outer Interconnected Community Network Loop */}
+          <path
+            d="M 50 27 A 22.5 22.5 0 0 1 69.5 61.5 A 22.5 22.5 0 0 1 30.5 61.5 A 22.5 22.5 0 0 1 50 27"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth="4.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.9"
+          />
 
-        {/* Right Vertical Pillar */}
-        <rect x="62" y="26" width="13" height="48" rx="6.5" fill="#FFFFFF" />
+          {/* Converging Connection Beams to Central Hub */}
+          <line
+            x1="50"
+            y1="27"
+            x2="50"
+            y2="50"
+            stroke="#FFFFFF"
+            strokeWidth="6.5"
+            strokeLinecap="round"
+          />
+          <line
+            x1="69.5"
+            y1="61.5"
+            x2="50"
+            y2="50"
+            stroke="#FFFFFF"
+            strokeWidth="6.5"
+            strokeLinecap="round"
+          />
+          <line
+            x1="30.5"
+            y1="61.5"
+            x2="50"
+            y2="50"
+            stroke="#FFFFFF"
+            strokeWidth="6.5"
+            strokeLinecap="round"
+          />
 
-        {/* Connecting Central Bridge / Hub Node */}
-        <rect x="25" y="44" width="50" height="12" rx="6" fill="#FFFFFF" />
+          {/* Central Hub Nexus */}
+          <circle cx="50" cy="50" r="8" fill="#FFFFFF" />
+          <circle cx="50" cy="50" r="4" fill="#2563EB" />
 
-        {/* Dynamic Center Pulse Core */}
-        <circle cx="50" cy="50" r="5" fill="#2563EB" />
+          {/* Three Student Community Nodes */}
+          {/* Top Node */}
+          <circle cx="50" cy="27" r="6.5" fill="#FFFFFF" />
+          <circle cx="50" cy="27" r="2.5" fill="#2563EB" />
 
-        {/* Subtle Top Right Connection Pip */}
-        <circle cx="68.5" cy="32.5" r="3" fill="#93C5FD" />
+          {/* Bottom-Right Node */}
+          <circle cx="69.5" cy="61.5" r="6.5" fill="#FFFFFF" />
+          <circle cx="69.5" cy="61.5" r="2.5" fill="#2563EB" />
+
+          {/* Bottom-Left Node */}
+          <circle cx="30.5" cy="61.5" r="6.5" fill="#FFFFFF" />
+          <circle cx="30.5" cy="61.5" r="2.5" fill="#2563EB" />
+        </g>
       </svg>
     </div>
   );
