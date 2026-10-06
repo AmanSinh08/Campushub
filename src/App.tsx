@@ -11,6 +11,7 @@ import { TrustSafetyView } from './components/TrustSafetyView';
 import { UploadResourceModal } from './components/UploadResourceModal';
 import { AuthProfileModal } from './components/AuthProfileModal';
 import { NewListingModal } from './components/NewListingModal';
+import { SplashScreen } from './components/SplashScreen';
 import {
   ActiveTab,
   MarketplaceItem,
@@ -101,6 +102,7 @@ export default function App() {
   const [isNewListingModalOpen, setIsNewListingModalOpen] = useState(false);
   const [isUploadResourceModalOpen, setIsUploadResourceModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState<boolean>(true);
   const [practiceInitialTopic, setPracticeInitialTopic] = useState<string>(
     'Computer Networks — TCP/IP'
   );
@@ -515,75 +517,77 @@ export default function App() {
         onOpenUploadModal={() => setIsUploadResourceModalOpen(true)}
       />
 
-      {/* Main Content Area (Offset by desktop sidebar w-64) */}
+      {/* Main Content Area (Offset by desktop sidebar w-64) with Page Transition */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-20 lg:pb-12 lg:pl-72">
-        {activeTab === 'overview' && (
-          <OverviewView onNavigate={setActiveTab} />
-        )}
+        <div key={activeTab} className="animate-page-enter">
+          {activeTab === 'overview' && (
+            <OverviewView onNavigate={setActiveTab} />
+          )}
 
-        {activeTab === 'marketplace' && (
-          <MarketplaceView
-            items={items}
-            profile={profile}
-            onAddItem={handleAddItem}
-            onToggleStatus={handleToggleStatus}
-            onAddReview={handleAddReview}
-            onReportItem={handleReportItem}
-            onOpenNewListing={() => setIsNewListingModalOpen(true)}
-          />
-        )}
+          {activeTab === 'marketplace' && (
+            <MarketplaceView
+              items={items}
+              profile={profile}
+              onAddItem={handleAddItem}
+              onToggleStatus={handleToggleStatus}
+              onAddReview={handleAddReview}
+              onReportItem={handleReportItem}
+              onOpenNewListing={() => setIsNewListingModalOpen(true)}
+            />
+          )}
 
-        {activeTab === 'study-hub' && (
-          <StudyHubView
-            resources={resources}
-            savedResourceIds={savedResourceIds}
-            onToggleSaveResource={handleToggleSaveResource}
-            onNavigate={setActiveTab}
-            onOpenUploadModal={() => setIsUploadResourceModalOpen(true)}
-            profile={profile}
-            onAddResourceComment={handleAddResourceComment}
-            onLikeResourceComment={handleLikeResourceComment}
-          />
-        )}
+          {activeTab === 'study-hub' && (
+            <StudyHubView
+              resources={resources}
+              savedResourceIds={savedResourceIds}
+              onToggleSaveResource={handleToggleSaveResource}
+              onNavigate={setActiveTab}
+              onOpenUploadModal={() => setIsUploadResourceModalOpen(true)}
+              profile={profile}
+              onAddResourceComment={handleAddResourceComment}
+              onLikeResourceComment={handleLikeResourceComment}
+            />
+          )}
 
-        {activeTab === 'pyq-bank' && (
-          <PYQBankView
-            papers={papers}
-            onStartMockTestFromPYQ={handleStartMockTestFromPYQ}
-            onNavigate={setActiveTab}
-          />
-        )}
+          {activeTab === 'pyq-bank' && (
+            <PYQBankView
+              papers={papers}
+              onStartMockTestFromPYQ={handleStartMockTestFromPYQ}
+              onNavigate={setActiveTab}
+            />
+          )}
 
-        {activeTab === 'ai-assistant' && (
-          <AIStudyAssistantView
-            onNavigate={setActiveTab}
-            onLaunchPracticeWithTopic={handleLaunchPracticeWithTopic}
-          />
-        )}
+          {activeTab === 'ai-assistant' && (
+            <AIStudyAssistantView
+              onNavigate={setActiveTab}
+              onLaunchPracticeWithTopic={handleLaunchPracticeWithTopic}
+            />
+          )}
 
-        {activeTab === 'practice-engine' && (
-          <PracticeEngineView
-            initialTopic={practiceInitialTopic}
-            onUpdateDashboardStats={handleUpdateDashboardStats}
-          />
-        )}
+          {activeTab === 'practice-engine' && (
+            <PracticeEngineView
+              initialTopic={practiceInitialTopic}
+              onUpdateDashboardStats={handleUpdateDashboardStats}
+            />
+          )}
 
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            profile={profile}
-            myListings={myListings}
-            savedResources={savedResources}
-            onNavigate={setActiveTab}
-            onToggleStatus={handleToggleStatus}
-            uploadedResources={resources}
-            onOpenUploadModal={() => setIsUploadResourceModalOpen(true)}
-            onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          />
-        )}
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              profile={profile}
+              myListings={myListings}
+              savedResources={savedResources}
+              onNavigate={setActiveTab}
+              onToggleStatus={handleToggleStatus}
+              uploadedResources={resources}
+              onOpenUploadModal={() => setIsUploadResourceModalOpen(true)}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            />
+          )}
 
-        {activeTab === 'trust-safety' && (
-          <TrustSafetyView />
-        )}
+          {activeTab === 'trust-safety' && (
+            <TrustSafetyView />
+          )}
+        </div>
       </main>
 
       {/* Sell Item / Create Campus Listing Modal */}
@@ -651,6 +655,11 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Animated Mobile App Splash Screen (1.8s sequence) */}
+      {showSplash && (
+        <SplashScreen onComplete={() => setShowSplash(false)} />
+      )}
     </div>
   );
 }

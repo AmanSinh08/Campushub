@@ -25,6 +25,7 @@ import {
   AlertCircle,
   RefreshCw,
   Check,
+  ArrowLeft,
 } from 'lucide-react';
 import { StudentProfile, StudyResource } from '../types';
 
@@ -337,8 +338,26 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-6 animate-in fade-in duration-200">
       <div className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl bg-white border border-[#E5E7EB] shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 sm:px-6 py-4 bg-white">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3.5 sm:px-6 py-3.5 bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            {/* Back Button */}
+            <button
+              id="back-profile-modal-btn"
+              onClick={() => {
+                if (activeTab !== 'profile') {
+                  setActiveTab('profile');
+                } else {
+                  onClose();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5] hover:bg-gray-200/80 text-[#171717] text-xs font-semibold transition-all shrink-0 active:scale-95"
+              title={activeTab !== 'profile' ? 'Back to Profile' : 'Back / Close'}
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4 text-[#171717]" />
+              <span className="hidden xs:inline">Back</span>
+            </button>
+
             <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] font-bold flex items-center justify-center border border-[#DBEAFE] shrink-0">
               <User className="h-5 w-5" />
             </div>

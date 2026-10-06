@@ -59,6 +59,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [readingResource, setReadingResource] = useState<StudyResource | null>(null);
   const [commentingResource, setCommentingResource] = useState<StudyResource | null>(null);
+  const [justSavedId, setJustSavedId] = useState<string | null>(null);
 
   const filteredResources = (resources || []).filter((item) => {
     if (!item) return false;
@@ -74,10 +75,16 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
     return matchesSemester && matchesCategory && matchesSearch;
   });
 
+  const handleSaveWithAnimation = (id: string) => {
+    onToggleSaveResource(id);
+    setJustSavedId(id);
+    setTimeout(() => setJustSavedId(null), 500);
+  };
+
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 pb-16 animate-page-enter">
       {/* 1. Study Hub Banner */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs animate-slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -97,7 +104,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
             {onOpenUploadModal && (
               <button
                 onClick={onOpenUploadModal}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
+                className="btn-interactive inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
               >
                 <UploadCloud className="h-4 w-4" />
                 <span>Upload Book / Notes</span>
@@ -107,8 +114,8 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
         </div>
       </section>
 
-      {/* 2. Topic Bundles Quick Explorer */}
-      <section className="space-y-3">
+      {/* 2. Topic Bundles Quick Explorer with Hover Lift */}
+      <section className="space-y-3 animate-slide-up stagger-1">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
             Core Semester Topic Bundles
@@ -122,11 +129,11 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
             { name: 'Data Structures', sem: 'Sem 3', count: 12, tag: 'Trees, Graphs' },
             { name: 'Operating Systems', sem: 'Sem 4', count: 7, tag: 'Deadlocks, Memory' },
             { name: 'Software Eng.', sem: 'Sem 6', count: 5, tag: 'Agile, UML' },
-          ].map((topic) => (
+          ].map((topic, i) => (
             <div
               key={topic.name}
               onClick={() => setSearchQuery(topic.name)}
-              className="cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-4 hover:border-[#2563EB]/50 hover:shadow-xs transition-all space-y-2 group"
+              className="card-interactive cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-4 shadow-xs space-y-2 group"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-md">
@@ -144,7 +151,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
       </section>
 
       {/* 3. Search and Semester Filters */}
-      <section className="space-y-3">
+      <section className="space-y-3 animate-slide-up stagger-2">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
@@ -153,12 +160,12 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
               placeholder="Search by book title, subject, topper author or topic..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] shadow-xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 shadow-xs transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#171717]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#171717] animate-fade-in"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -169,7 +176,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
             <select
               value={selectedSemester}
               onChange={(e) => setSelectedSemester(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs"
+              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs transition-colors"
             >
               <option value="All">All Semesters</option>
               {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
@@ -183,7 +190,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setSelectedCategory('All')}
-            className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`btn-interactive shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               selectedCategory === 'All'
                 ? 'bg-[#171717] text-white shadow-xs'
                 : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -198,7 +205,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                className={`btn-interactive shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
                   isSelected
                     ? 'bg-[#2563EB] text-white font-semibold shadow-xs'
                     : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -211,15 +218,15 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
         </div>
       </section>
 
-      {/* 4. Resources Cards Grid */}
-      <section>
+      {/* 4. Resources Cards Grid with Staggered Entrance */}
+      <section className="animate-slide-up stagger-3">
         <div className="flex items-center justify-between mb-3 text-xs text-[#6B7280]">
           <span>Showing {filteredResources.length} curriculum materials</span>
           <span>Interactive in-browser PDF reader available</span>
         </div>
 
         {filteredResources.length === 0 ? (
-          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center space-y-3 shadow-xs">
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center space-y-3 shadow-xs animate-scale-in">
             <BookOpen className="h-8 w-8 text-[#9CA3AF] mx-auto" />
             <h3 className="text-sm font-bold text-[#171717]">No study resources found</h3>
             <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
@@ -228,7 +235,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
             {onOpenUploadModal && (
               <button
                 onClick={onOpenUploadModal}
-                className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
+                className="btn-interactive px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold shadow-xs"
               >
                 Upload Resource Now
               </button>
@@ -236,29 +243,30 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {filteredResources.map((res) => {
+            {filteredResources.map((res, index) => {
               const isSaved = savedResourceIds.includes(res.id);
               const commentsCount = (res.comments || []).length || (res.ratingsCount || 12);
               const ratingScore = res.rating || 4.9;
+              const staggerClass = `stagger-${Math.min(index + 1, 8)}`;
 
               return (
                 <div
                   key={res.id}
-                  className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs hover:shadow-md hover:border-[#2563EB]/40 transition-all flex flex-col justify-between space-y-4 group"
+                  className={`card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs flex flex-col justify-between space-y-4 group animate-slide-up ${staggerClass}`}
                 >
                   <div className="space-y-3">
-                    {/* Category & Save button */}
+                    {/* Category & Save button with micro pop animation */}
                     <div className="flex items-start justify-between gap-2">
                       <span className="inline-block rounded-md bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#DBEAFE]">
                         Sem {res.semester} • {res.category}
                       </span>
                       <button
-                        onClick={() => onToggleSaveResource(res.id)}
-                        className={`p-1.5 rounded-lg transition-colors ${
+                        onClick={() => handleSaveWithAnimation(res.id)}
+                        className={`p-1.5 rounded-lg transition-all ${
                           isSaved
                             ? 'text-[#2563EB] bg-[#EFF6FF]'
                             : 'text-[#9CA3AF] hover:text-[#171717] hover:bg-[#F7F7F5]'
-                        }`}
+                        } ${justSavedId === res.id ? 'animate-pop' : ''}`}
                         title={isSaved ? 'Saved in library' : 'Save to library'}
                       >
                         {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
@@ -300,7 +308,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => setReadingResource(res)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                      className="btn-interactive flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
                     >
                       <Eye className="h-3.5 w-3.5" />
                       <span>Read Online</span>
@@ -308,7 +316,7 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
 
                     <button
                       onClick={() => setCommentingResource(res)}
-                      className="px-3 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#171717] text-xs font-medium transition-colors"
+                      className="btn-interactive px-3 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#171717] text-xs font-medium"
                       title="Read Student Reviews"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />

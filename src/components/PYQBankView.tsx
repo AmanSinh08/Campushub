@@ -119,9 +119,9 @@ Structure the response clearly:
   };
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 pb-16 animate-page-enter">
       {/* 1. PYQ Bank Banner */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs animate-slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ Structure the response clearly:
           {selectedPaper && (
             <button
               onClick={() => onStartMockTestFromPYQ(selectedPaper)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98] shrink-0"
+              className="btn-interactive inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shrink-0"
             >
               <Target className="h-4 w-4" />
               <span>Start Timed Mock Exam</span>
@@ -155,7 +155,7 @@ Structure the response clearly:
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB]"
+              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB] transition-colors"
             >
               <option value="All">All Courses</option>
               {courses.map((c) => (
@@ -169,7 +169,7 @@ Structure the response clearly:
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB]"
+              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB] transition-colors"
             >
               <option value="All">All Subjects</option>
               {subjects.map((s) => (
@@ -183,7 +183,7 @@ Structure the response clearly:
             <select
               value={selectedSemester}
               onChange={(e) => setSelectedSemester(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB]"
+              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB] transition-colors"
             >
               <option value="All">All Semesters</option>
               {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
@@ -197,7 +197,7 @@ Structure the response clearly:
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB]"
+              className="w-full text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-2 text-[#171717] focus:outline-none focus:border-[#2563EB] transition-colors"
             >
               <option value="All">All Years</option>
               {years.map((y) => (
@@ -208,15 +208,15 @@ Structure the response clearly:
         </div>
       </section>
 
-      {/* 2. Papers Selector Ribbon */}
-      <section className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {/* 2. Papers Selector Ribbon with smooth active pill */}
+      <section className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none animate-slide-up stagger-1">
         {filteredPapers.map((paper) => {
           const isSelected = selectedPaper?.id === paper.id;
           return (
             <button
               key={paper.id}
               onClick={() => setSelectedPaper(paper)}
-              className={`shrink-0 text-left p-3 rounded-2xl border transition-all ${
+              className={`btn-interactive shrink-0 text-left p-3 rounded-2xl border transition-all ${
                 isSelected
                   ? 'bg-white border-[#2563EB] shadow-sm ring-2 ring-[#2563EB]/10'
                   : 'bg-white border-[#E5E7EB] hover:border-gray-300'
@@ -240,7 +240,7 @@ Structure the response clearly:
 
       {/* 3. Main Split View: Questions List (Left) & AI Model Solution (Right) */}
       {selectedPaper ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-slide-up stagger-2">
           {/* Left: Questions List (5 cols) */}
           <div className="lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -257,9 +257,9 @@ Structure the response clearly:
                   <div
                     key={q.id}
                     onClick={() => handleSelectQuestion(q)}
-                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                    className={`btn-interactive cursor-pointer rounded-2xl p-4 border text-left space-y-2 ${
                       isSelected
-                        ? 'bg-[#EFF6FF] border-[#2563EB] shadow-xs'
+                        ? 'bg-[#EFF6FF] border-[#2563EB] shadow-xs ring-1 ring-[#2563EB]'
                         : 'bg-white border-[#E5E7EB] hover:border-[#2563EB]/40'
                     }`}
                   >
@@ -283,7 +283,7 @@ Structure the response clearly:
 
           {/* Right: AI Marking Scheme Solution Canvas (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-xs space-y-4 animate-scale-in">
               {/* Question Header */}
               {selectedQuestion && (
                 <div className="space-y-2 border-b border-[#E5E7EB] pb-4">
@@ -309,7 +309,7 @@ Structure the response clearly:
                 <button
                   onClick={handleGenerateAISolution}
                   disabled={isGenerating}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold shadow-xs transition-colors"
+                  className="btn-interactive inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold shadow-xs"
                 >
                   {isGenerating ? (
                     <>
@@ -327,16 +327,24 @@ Structure the response clearly:
                 {aiSolution && (
                   <button
                     onClick={handleCopySolution}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-xs font-medium text-[#171717] transition-colors"
+                    className="btn-interactive inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-xs font-medium text-[#171717]"
                   >
-                    {copied ? <Check className="h-3.5 w-3.5 text-[#16A34A]" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copied ? 'Copied' : 'Copy Solution'}</span>
+                    {copied ? (
+                      <span className="text-[#16A34A] font-bold flex items-center gap-1 animate-checkmark-pop">
+                        <Check className="h-3.5 w-3.5" /> Copied
+                      </span>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        <span>Copy Solution</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>
 
               {/* Solution display area */}
-              <div className="rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] p-4 sm:p-5 text-xs sm:text-sm text-[#171717] leading-relaxed whitespace-pre-wrap font-sans">
+              <div className="rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] p-4 sm:p-5 text-xs sm:text-sm text-[#171717] leading-relaxed whitespace-pre-wrap font-sans animate-slide-up">
                 {aiSolution ? (
                   aiSolution
                 ) : (
@@ -350,7 +358,7 @@ Structure the response clearly:
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center text-[#6B7280]">
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center text-[#6B7280] animate-scale-in">
           No papers found matching the selected filters.
         </div>
       )}

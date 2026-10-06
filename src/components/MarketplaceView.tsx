@@ -156,8 +156,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
 
   return (
     <div className="space-y-6 pb-16">
-      {/* 1. Header & Quick Post CTA */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+      {/* 1. Header & Quick Post CTA with Entrance Animation */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs animate-slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -175,19 +175,19 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
 
           <button
             onClick={onOpenNewListing}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98] shrink-0"
+            className="btn-interactive inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shrink-0"
           >
             <Plus className="h-4 w-4 stroke-[2.5]" />
             <span>Sell on Campus</span>
           </button>
         </div>
 
-        {/* Campus Scope Tabs */}
+        {/* Campus Scope Tabs with Smooth Transition */}
         <div className="mt-5 pt-4 border-t border-[#E5E7EB] flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-[#6B7280] mr-1">Campus Scope:</span>
           <button
             onClick={() => setCampusScope('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`btn-interactive px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               campusScope === 'all'
                 ? 'bg-[#2563EB] text-white shadow-xs'
                 : 'bg-[#F7F7F5] text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -201,7 +201,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
 
           <button
             onClick={() => setCampusScope('my_college')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`btn-interactive px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               campusScope === 'my_college'
                 ? 'bg-[#2563EB] text-white shadow-xs'
                 : 'bg-[#F7F7F5] text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -215,7 +215,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
 
           <button
             onClick={() => setCampusScope('nearby')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`btn-interactive px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               campusScope === 'nearby'
                 ? 'bg-[#2563EB] text-white shadow-xs'
                 : 'bg-[#F7F7F5] text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -234,7 +234,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 setCustomCollegeFilter(e.target.value);
                 setCampusScope('custom');
               }}
-              className="text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-1.5 text-[#171717] focus:outline-none focus:border-[#2563EB]"
+              className="text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-1.5 text-[#171717] focus:outline-none focus:border-[#2563EB] transition-colors"
             >
               <option value="All">Select Specific College...</option>
               {availableColleges.map((col) => (
@@ -246,9 +246,9 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
       </section>
 
       {/* 2. Search & Category Filters */}
-      <section className="space-y-3">
+      <section className="space-y-3 animate-slide-up stagger-1">
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search bar */}
+          {/* Search bar with smooth active focus border */}
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
             <input
@@ -256,12 +256,12 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
               placeholder="Search books, calculators, bicycles, laptops, study lamps..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] shadow-xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 shadow-xs transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#171717]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#171717] animate-fade-in"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -273,7 +273,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             <select
               value={selectedCondition}
               onChange={(e) => setSelectedCondition(e.target.value)}
-              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs"
+              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs transition-colors"
             >
               <option value="All">All Conditions</option>
               <option value="Like New">Like New</option>
@@ -284,7 +284,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs"
+              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs transition-colors"
             >
               <option value="All">All Status</option>
               <option value="available">Available</option>
@@ -297,7 +297,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setSelectedCategory('All')}
-            className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`btn-interactive shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               selectedCategory === 'All'
                 ? 'bg-[#171717] text-white shadow-xs'
                 : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -312,7 +312,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                className={`btn-interactive shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
                   isSelected
                     ? 'bg-[#2563EB] text-white font-semibold shadow-xs'
                     : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
@@ -325,15 +325,15 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         </div>
       </section>
 
-      {/* 3. Products Grid */}
-      <section>
+      {/* 3. Products Grid with Staggered Entrance & Interactive Hover Lift */}
+      <section className="animate-slide-up stagger-2">
         <div className="flex items-center justify-between mb-3 text-xs text-[#6B7280]">
           <span>Showing {filteredItems.length} student listings</span>
           <span>Verified campus peer exchange</span>
         </div>
 
         {filteredItems.length === 0 ? (
-          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center space-y-3 shadow-xs">
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center space-y-3 shadow-xs animate-scale-in">
             <Search className="h-8 w-8 text-[#9CA3AF] mx-auto" />
             <h3 className="text-sm font-bold text-[#171717]">No items found matching your filters</h3>
             <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
@@ -346,116 +346,120 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 setSearchQuery('');
                 setCampusScope('all');
               }}
-              className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
+              className="btn-interactive px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
             >
               Reset Filters
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl bg-white border border-[#E5E7EB] overflow-hidden shadow-xs hover:shadow-md hover:border-[#2563EB]/40 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  {/* Image container */}
-                  <div className="relative aspect-4/3 w-full bg-gray-100 overflow-hidden">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
-                      <span className="rounded-lg bg-white/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-[#171717] shadow-xs">
-                        {item.condition}
-                      </span>
-                      {item.status === 'sold' && (
-                        <span className="rounded-lg bg-[#DC2626] text-white px-2 py-0.5 text-[10px] font-bold">
-                          SOLD
+            {filteredItems.map((item, index) => {
+              const staggerClass = `stagger-${Math.min(index + 1, 8)}`;
+              return (
+                <div
+                  key={item.id}
+                  className={`card-interactive rounded-2xl bg-white border border-[#E5E7EB] overflow-hidden shadow-xs flex flex-col justify-between group animate-slide-up ${staggerClass}`}
+                >
+                  <div>
+                    {/* Image container with gentle hover zoom */}
+                    <div className="relative aspect-4/3 w-full bg-gray-100 overflow-hidden">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300 ease-out"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
+                        <span className="rounded-lg bg-white/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-[#171717] shadow-xs">
+                          {item.condition}
                         </span>
-                      )}
-                    </div>
-                    <div className="absolute top-2.5 right-2.5">
-                      <span className="rounded-lg bg-[#2563EB] text-white px-2.5 py-1 text-xs font-bold shadow-xs">
-                        ₹{item.price}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Body Content */}
-                  <div className="p-4 space-y-2.5">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-semibold text-[#2563EB] uppercase tracking-wider block truncate">
-                        {item.category}
-                      </span>
-                      <h3 className="text-sm font-bold text-[#171717] line-clamp-1 group-hover:text-[#2563EB] transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-[#6B7280] line-clamp-2 leading-relaxed">
-                        {item.description}
-                      </p>
+                        {item.status === 'sold' && (
+                          <span className="rounded-lg bg-[#DC2626] text-white px-2 py-0.5 text-[10px] font-bold animate-pop">
+                            SOLD
+                          </span>
+                        )}
+                      </div>
+                      <div className="absolute top-2.5 right-2.5">
+                        <span className="rounded-lg bg-[#2563EB] text-white px-2.5 py-1 text-xs font-bold shadow-xs">
+                          ₹{item.price}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Seller details badge */}
-                    <div className="pt-2 border-t border-[#E5E7EB] flex items-center justify-between text-xs">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1">
-                          <span className="font-semibold text-[#171717] truncate">{item.sellerName}</span>
-                          {item.sellerVerified && (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-[#16A34A] shrink-0" />
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#6B7280] truncate flex items-center gap-1">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          <span>{item.location}</span>
+                    {/* Body Content */}
+                    <div className="p-4 space-y-2.5">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-semibold text-[#2563EB] uppercase tracking-wider block truncate">
+                          {item.category}
+                        </span>
+                        <h3 className="text-sm font-bold text-[#171717] line-clamp-1 group-hover:text-[#2563EB] transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-[#6B7280] line-clamp-2 leading-relaxed">
+                          {item.description}
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-1 text-amber-500 shrink-0 font-bold text-xs">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        <span>{item.sellerRating || 4.9}</span>
+                      {/* Seller details badge */}
+                      <div className="pt-2 border-t border-[#E5E7EB] flex items-center justify-between text-xs">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-[#171717] truncate">{item.sellerName}</span>
+                            {item.sellerVerified && (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-[#16A34A] shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[#6B7280] truncate flex items-center gap-1">
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            <span>{item.location}</span>
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-amber-500 shrink-0 font-bold text-xs">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span>{item.sellerRating || 4.9}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Card Action footer with smooth button feedback */}
+                  <div className="p-4 pt-0 flex items-center gap-2">
+                    <button
+                      onClick={() => setContactModalItem(item)}
+                      className="btn-interactive flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <span>Contact Seller</span>
+                    </button>
+
+                    <button
+                      onClick={() => setReviewModalItem(item)}
+                      className="btn-interactive p-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#171717]"
+                      title="Student Reviews"
+                    >
+                      <Star className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      onClick={() => setReportModalItem(item)}
+                      className="btn-interactive p-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#DC2626]"
+                      title="Safety Report"
+                    >
+                      <Flag className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-
-                {/* Card Action footer */}
-                <div className="p-4 pt-0 flex items-center gap-2">
-                  <button
-                    onClick={() => setContactModalItem(item)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    <span>Contact Seller</span>
-                  </button>
-
-                  <button
-                    onClick={() => setReviewModalItem(item)}
-                    className="p-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#171717] transition-colors"
-                    title="Student Reviews"
-                  >
-                    <Star className="h-4 w-4" />
-                  </button>
-
-                  <button
-                    onClick={() => setReportModalItem(item)}
-                    className="p-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#DC2626] transition-colors"
-                    title="Safety Report"
-                  >
-                    <Flag className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
 
-      {/* MODAL 1: CONTACT SELLER & CAMPUS PICKUP */}
+      {/* MODAL 1: CONTACT SELLER WITH ANIMATED SCALE-IN */}
       {contactModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#171717]">Contact Seller for Campus Handover</h3>
@@ -488,7 +492,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             <div className="grid grid-cols-2 gap-2.5">
               <a
                 href={`tel:${contactModalItem.contactPhone || '+919876543210'}`}
-                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#DCFCE7] text-[#16A34A] border border-green-200 text-xs font-semibold hover:bg-green-100 transition-colors"
+                className="btn-interactive flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#DCFCE7] text-[#16A34A] border border-green-200 text-xs font-semibold hover:bg-green-100"
               >
                 <Phone className="h-3.5 w-3.5" />
                 <span>Call Seller</span>
@@ -498,7 +502,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 href={`https://wa.me/${(contactModalItem.contactPhone || '919876543210').replace(/\D/g, '')}?text=Hi%20${encodeURIComponent(contactModalItem.sellerName)},%20I%20saw%20your%20listing%20for%20${encodeURIComponent(contactModalItem.title)}%20on%20CampusHub.`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] text-xs font-semibold hover:bg-blue-100 transition-colors"
+                className="btn-interactive flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] text-xs font-semibold hover:bg-blue-100"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
                 <span>WhatsApp</span>
@@ -512,7 +516,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 {chatHistory.map((c, i) => (
                   <div
                     key={i}
-                    className={`flex flex-col ${c.sender === 'me' ? 'items-end' : 'items-start'}`}
+                    className={`flex flex-col ${c.sender === 'me' ? 'items-end' : 'items-start'} animate-slide-up`}
                   >
                     <div
                       className={`max-w-[80%] rounded-xl px-3 py-2 text-xs ${
@@ -534,11 +538,11 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   placeholder="Type message or pickup meeting point..."
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-[#E5E7EB] text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
+                  className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-[#E5E7EB] text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 transition-all"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold flex items-center justify-center"
+                  className="btn-interactive px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold flex items-center justify-center"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </button>
@@ -550,8 +554,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
 
       {/* MODAL 2: REVIEWS */}
       {reviewModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4 animate-scale-in">
             <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#171717]">Seller Ratings & Reviews</h3>
@@ -574,7 +578,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                       key={star}
                       type="button"
                       onClick={() => setReviewRating(star)}
-                      className="p-1 text-amber-400"
+                      className="p-1 text-amber-400 hover:scale-110 transition-transform"
                     >
                       <Star
                         className={`h-5 w-5 ${
@@ -608,7 +612,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
+                  className="btn-interactive px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
                 >
                   Submit Review
                 </button>
@@ -620,8 +624,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
 
       {/* MODAL 3: SAFETY REPORT */}
       {reportModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4 animate-scale-in">
             <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#171717]">Report Listing to Moderation</h3>
@@ -663,7 +667,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#DC2626] text-white text-xs font-semibold"
+                  className="btn-interactive px-4 py-2 rounded-xl bg-[#DC2626] text-white text-xs font-semibold"
                 >
                   Submit Report
                 </button>

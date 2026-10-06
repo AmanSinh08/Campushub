@@ -57,9 +57,9 @@ export const TrustSafetyView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-16">
+    <div className="space-y-6 sm:space-y-8 pb-16 animate-page-enter">
       {/* 1. Header Banner */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs animate-slide-up">
         <div className="max-w-3xl space-y-2">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A] text-xs font-bold border border-green-200">
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -74,9 +74,9 @@ export const TrustSafetyView: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Four Pillars Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+      {/* 2. Four Pillars Grid with Card Interactive Lift */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up stagger-1">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
           <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
             <UserCheck className="h-5 w-5" />
           </div>
@@ -86,7 +86,7 @@ export const TrustSafetyView: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
           <div className="h-10 w-10 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
             <MapPin className="h-5 w-5" />
           </div>
@@ -96,7 +96,7 @@ export const TrustSafetyView: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
           <div className="h-10 w-10 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
             <Star className="h-5 w-5" />
           </div>
@@ -106,7 +106,7 @@ export const TrustSafetyView: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
           <div className="h-10 w-10 rounded-xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center">
             <Flag className="h-5 w-5" />
           </div>
@@ -118,7 +118,7 @@ export const TrustSafetyView: React.FC = () => {
       </section>
 
       {/* 3. Interactive Student Roll Number Verification Lookup */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs space-y-4">
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs space-y-4 animate-slide-up stagger-2">
         <div>
           <h2 className="text-base font-bold text-[#171717]">Live Student Authentication Lookup</h2>
           <p className="text-xs text-[#6B7280]">
@@ -132,11 +132,11 @@ export const TrustSafetyView: React.FC = () => {
             value={lookupRoll}
             onChange={(e) => setLookupRoll(e.target.value)}
             placeholder="e.g. 2100540130042 or 2200540100089"
-            className="flex-1 px-4 py-2.5 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#2563EB]"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 transition-all"
           />
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5"
+            className="btn-interactive px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5"
           >
             <Search className="h-4 w-4" />
             <span>Verify Student</span>
@@ -144,7 +144,7 @@ export const TrustSafetyView: React.FC = () => {
         </form>
 
         {lookupResult && (
-          <div className="p-4 rounded-xl bg-[#DCFCE7] border border-green-200 space-y-1.5 max-w-xl">
+          <div className="p-4 rounded-xl bg-[#DCFCE7] border border-green-200 space-y-1.5 max-w-xl animate-scale-in">
             <div className="flex items-center gap-2 text-xs font-bold text-[#16A34A]">
               <CheckCircle2 className="h-4 w-4" />
               <span>Verified Campus Student Record Found</span>
@@ -158,7 +158,7 @@ export const TrustSafetyView: React.FC = () => {
       </section>
 
       {/* 4. Safe Handover Zones List */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs space-y-4">
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs space-y-4 animate-slide-up stagger-3">
         <h2 className="text-base font-bold text-[#171717]">Designated Campus Safe Exchange Zones</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
@@ -166,7 +166,7 @@ export const TrustSafetyView: React.FC = () => {
             { name: 'Student Cafeteria & Food Court', timing: '8:00 AM – 8:00 PM', landmark: 'Main Entrance Seating' },
             { name: 'Hostel Gate Security Booth', timing: '7:00 AM – 9:30 PM', landmark: 'Near Warden Office Checkpoint' },
           ].map((zone) => (
-            <div key={zone.name} className="p-4 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5]/50 space-y-1.5">
+            <div key={zone.name} className="card-interactive p-4 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5]/50 space-y-1.5">
               <div className="flex items-center gap-2 text-xs font-bold text-[#171717]">
                 <MapPin className="h-4 w-4 text-[#2563EB]" />
                 <span>{zone.name}</span>

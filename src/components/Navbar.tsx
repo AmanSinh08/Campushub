@@ -15,9 +15,9 @@ import {
   X,
   Compass,
   ChevronRight,
-  GraduationCap,
 } from 'lucide-react';
 import { ActiveTab, StudentProfile } from '../types';
+import { CampusHubLogo } from './CampusHubLogo';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -59,20 +59,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 bg-white border-r border-[#E5E7EB] z-30">
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-[#E5E7EB]">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-[#E5E7EB]">
           <button
             onClick={() => onNavigate('overview')}
             className="flex items-center gap-2.5 text-left focus:outline-none group"
           >
-            <div className="h-9 w-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:bg-blue-700 transition-colors">
-              <GraduationCap className="h-5 w-5" />
-            </div>
+            <CampusHubLogo size={34} glow={false} />
             <div>
-              <span className="font-bold text-base text-[#171717] tracking-tight block leading-tight">
+              <span className="font-bold text-base text-[#171717] tracking-tight block leading-tight font-sans">
                 Campus<span className="text-[#2563EB]">Hub</span>
               </span>
               <span className="text-[11px] text-[#6B7280] font-medium block leading-tight">
-                Student Ecosystem
+                Our Campus. One Hub.
               </span>
             </div>
           </button>
@@ -178,10 +176,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigate('overview')}
               className="lg:hidden flex items-center gap-2"
             >
-              <div className="h-8 w-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white">
-                <GraduationCap className="h-4 w-4" />
-              </div>
-              <span className="font-bold text-sm text-[#171717]">
+              <CampusHubLogo size={30} glow={false} />
+              <span className="font-bold text-sm text-[#171717] font-sans">
                 Campus<span className="text-[#2563EB]">Hub</span>
               </span>
             </button>
@@ -245,10 +241,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col z-10 border-r border-[#E5E7EB]">
             <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white">
-                  <GraduationCap className="h-4 w-4" />
-                </div>
-                <span className="font-bold text-sm text-[#171717]">
+                <CampusHubLogo size={28} glow={false} />
+                <span className="font-bold text-sm text-[#171717] font-sans">
                   Campus<span className="text-[#2563EB]">Hub</span>
                 </span>
               </div>

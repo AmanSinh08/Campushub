@@ -16,6 +16,7 @@ import {
   FileText,
   ExternalLink,
   ChevronRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { StudentProfile, MarketplaceItem, StudyResource, ActiveTab } from '../types';
 
@@ -50,9 +51,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   );
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-16">
-      {/* 1. GREETING / HEADER CARD */}
-      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+    <div className="space-y-6 sm:space-y-8 pb-16 animate-page-enter">
+      {/* Back Button */}
+      <div className="flex items-center">
+        <button
+          onClick={() => onNavigate('overview')}
+          className="btn-interactive inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F7F7F5] text-xs font-semibold text-[#6B7280] hover:text-[#171717] transition-all shadow-2xs"
+          title="Back to Overview"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 text-[#2563EB]" />
+          <span>Back to Home</span>
+        </button>
+      </div>
+
+      {/* 1. GREETING / HEADER CARD with slide-up entrance */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs animate-slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-2xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] text-xl font-bold flex items-center justify-center shrink-0">
@@ -86,7 +99,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {onOpenUploadModal && (
               <button
                 onClick={onOpenUploadModal}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
+                className="btn-interactive inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
               >
                 <UploadCloud className="h-4 w-4" />
                 <span>Upload PDF / Notes</span>
@@ -96,7 +109,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {onOpenAuthModal && (
               <button
                 onClick={onOpenAuthModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#171717] border border-[#E5E7EB] text-xs font-medium transition-all"
+                className="btn-interactive inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#171717] border border-[#E5E7EB] text-xs font-medium"
               >
                 <User className="h-3.5 w-3.5 text-[#6B7280]" />
                 <span>Account Profile</span>
@@ -106,10 +119,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </section>
 
-      {/* 2. IMPORTANT SUMMARY CARDS */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      {/* 2. IMPORTANT SUMMARY CARDS with Staggered Entrance and Card Hover */}
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 animate-slide-up stagger-1">
         {/* Metric 1 */}
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
               Active Listings
@@ -125,7 +138,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Metric 2 */}
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
               Saved Library
@@ -141,7 +154,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Metric 3 */}
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
               Practice Score
@@ -157,7 +170,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Metric 4 */}
-        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div className="card-interactive rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
               Diagnosed Weakness
@@ -176,9 +189,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </section>
 
       {/* 3. TODAY'S FOCUS & WEAK AREA DRILL BANNER */}
-      <section className="rounded-2xl bg-[#EFF6FF] border border-[#DBEAFE] p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <section className="rounded-2xl bg-[#EFF6FF] border border-[#DBEAFE] p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-slide-up stagger-2">
         <div className="flex items-start gap-3.5">
-          <div className="h-10 w-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center shrink-0 shadow-xs">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
@@ -193,7 +206,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <button
           onClick={() => onNavigate('practice-engine')}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shrink-0 transition-all active:scale-[0.98]"
+          className="btn-interactive inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shrink-0"
         >
           <Target className="h-3.5 w-3.5" />
           <span>Launch Topic Quiz</span>
@@ -202,7 +215,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </section>
 
       {/* 4. MAIN TWO-COLUMN WORKSPACE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-slide-up stagger-3">
         {/* Left Column (7 cols): Saved Notes & Marketplace Listings */}
         <div className="lg:col-span-7 space-y-6">
           {/* Saved Resources Card */}
@@ -241,7 +254,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                     <button
                       onClick={() => onNavigate('study-hub')}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-[#E5E7EB] hover:border-[#2563EB] text-xs font-semibold text-[#171717] hover:text-[#2563EB] shrink-0 transition-colors"
+                      className="btn-interactive px-3 py-1.5 rounded-lg bg-white border border-[#E5E7EB] hover:border-[#2563EB] text-xs font-semibold text-[#171717] hover:text-[#2563EB] shrink-0"
                     >
                       Read Now
                     </button>
@@ -281,7 +294,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {onOpenUploadModal && (
                   <button
                     onClick={onOpenUploadModal}
-                    className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2563EB] text-white text-xs font-semibold"
+                    className="btn-interactive mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2563EB] text-white text-xs font-semibold"
                   >
                     <UploadCloud className="h-3.5 w-3.5" />
                     <span>Upload First PDF</span>
@@ -307,7 +320,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                     <button
                       onClick={() => onNavigate('study-hub')}
-                      className="px-3 py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-gray-200/80 text-xs font-medium text-[#171717] shrink-0"
+                      className="btn-interactive px-3 py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-gray-200/80 text-xs font-medium text-[#171717] shrink-0"
                     >
                       View in Hub
                     </button>
@@ -373,7 +386,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             item.status === 'available' ? 'sold' : 'available'
                           )
                         }
-                        className="rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F7F7F5] px-3 py-1 text-xs font-semibold text-[#171717] transition-colors"
+                        className="btn-interactive rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F7F7F5] px-3 py-1 text-xs font-semibold text-[#171717]"
                       >
                         {item.status === 'available' ? 'Mark Sold' : 'Relist'}
                       </button>
@@ -387,7 +400,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Right Column (5 cols): Academic Information & Concept Mastery */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Concept Mastery Breakdown */}
+          {/* Concept Mastery Breakdown with animated progress bars */}
           <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-4">
             <div className="border-b border-[#E5E7EB] pb-3">
               <div className="flex items-center gap-2">
@@ -413,7 +426,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
                   <div className="h-2 w-full rounded-full bg-[#E5E7EB] overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${c.color} transition-all`}
+                      className={`h-full rounded-full ${c.color} transition-all duration-500 ease-out`}
                       style={{ width: `${c.mastery}%` }}
                     />
                   </div>
@@ -423,7 +436,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => onNavigate('practice-engine')}
-              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] py-2.5 text-xs font-semibold transition-colors"
+              className="btn-interactive w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] py-2.5 text-xs font-semibold"
             >
               <Target className="h-3.5 w-3.5" />
               <span>Launch Adaptive Practice Test</span>
@@ -439,35 +452,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="space-y-2.5 text-xs">
               <div
                 onClick={() => onNavigate('pyq-bank')}
-                className="cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3"
+                className="btn-interactive cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3 group"
               >
                 <div>
-                  <p className="font-bold text-[#171717]">Review 2025 DBMS Exam Paper</p>
+                  <p className="font-bold text-[#171717] group-hover:text-[#2563EB] transition-colors">Review 2025 DBMS Exam Paper</p>
                   <p className="text-[11px] text-[#6B7280] mt-0.5">Step-by-step marking answers included</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-[#9CA3AF] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform shrink-0" />
               </div>
 
               <div
                 onClick={() => onNavigate('ai-assistant')}
-                className="cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3"
+                className="btn-interactive cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3 group"
               >
                 <div>
-                  <p className="font-bold text-[#171717]">Ask AI: 5-min Revision for TCP</p>
+                  <p className="font-bold text-[#171717] group-hover:text-[#2563EB] transition-colors">Ask AI: 5-min Revision for TCP</p>
                   <p className="text-[11px] text-[#6B7280] mt-0.5">Focus on your diagnosed weak area</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-[#9CA3AF] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform shrink-0" />
               </div>
 
               <div
                 onClick={() => onNavigate('marketplace')}
-                className="cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3"
+                className="btn-interactive cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3 group"
               >
                 <div>
-                  <p className="font-bold text-[#171717]">Browse Senior Textbook Listings</p>
+                  <p className="font-bold text-[#171717] group-hover:text-[#2563EB] transition-colors">Browse Senior Textbook Listings</p>
                   <p className="text-[11px] text-[#6B7280] mt-0.5">Discounted semester books on campus</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-[#9CA3AF] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#9CA3AF] group-hover:translate-x-1 transition-transform shrink-0" />
               </div>
             </div>
           </div>
