@@ -10,236 +10,173 @@ import {
   Lock,
   Building,
   Check,
+  Search,
 } from 'lucide-react';
 import { PRESENTER_INFO } from '../data/mockData';
 
 export const TrustSafetyView: React.FC = () => {
-  const [testRoll, setTestRoll] = useState('2500540130007');
-  const [verificationResult, setVerificationResult] = useState<{
-    status: 'verified' | 'unverified';
+  const [lookupRoll, setLookupRoll] = useState('');
+  const [lookupResult, setLookupResult] = useState<{
+    found: boolean;
     name?: string;
-    department?: string;
+    course?: string;
     college?: string;
-  } | null>({
-    status: 'verified',
-    name: 'Aman Kumar Singh',
-    department: 'B.Tech',
-    college: 'BBDITM',
-  });
+    verified?: boolean;
+  } | null>(null);
 
-  const handleVerifyStudent = (e: React.FormEvent) => {
+  const handleLookup = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!testRoll.trim()) return;
+    if (!lookupRoll.trim()) return;
 
-    if (testRoll === PRESENTER_INFO.rollNo || testRoll.startsWith('25') || testRoll.startsWith('21')) {
-      setVerificationResult({
-        status: 'verified',
-        name: testRoll === PRESENTER_INFO.rollNo ? PRESENTER_INFO.name : 'Verified University Student',
-        department: 'B.Tech',
-        college: PRESENTER_INFO.college,
+    const trimmed = lookupRoll.trim();
+    if (trimmed.includes('2100540130042') || trimmed.toLowerCase().includes('aman')) {
+      setLookupResult({
+        found: true,
+        name: 'Aman Kumar Singh',
+        course: 'B.Tech IT (Final Year)',
+        college: 'Babu Banarasi Das Institute of Technology and Management (BBDITM)',
+        verified: true,
+      });
+    } else if (trimmed.includes('2200540100089') || trimmed.toLowerCase().includes('priya')) {
+      setLookupResult({
+        found: true,
+        name: 'Priya Sharma',
+        course: 'B.Tech CSE (3rd Year)',
+        college: 'Babu Banarasi Das Institute of Technology and Management (BBDITM)',
+        verified: true,
       });
     } else {
-      setVerificationResult({
-        status: 'unverified',
+      setLookupResult({
+        found: true,
+        name: 'Verified University Student',
+        course: 'Engineering / Science Student',
+        college: 'AKTU / Lucknow University Affiliated Institute',
+        verified: true,
       });
     }
   };
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Slide 11 Header */}
-      <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-6 sm:p-8 space-y-6 shadow-xl">
-        <div className="border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              COMMUNITY INTEGRITY & MODERATION
-            </span>
-            <span className="rounded-full bg-emerald-950 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-800/60">
-              Verified Campus Ecosystem
-            </span>
+    <div className="space-y-6 sm:space-y-8 pb-16">
+      {/* 1. Header Banner */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+        <div className="max-w-3xl space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A] text-xs font-bold border border-green-200">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Campus Security & Verification Standard</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mt-1">
-            Trust, Safety & Moderation
+          <h1 className="text-xl sm:text-2xl font-bold text-[#171717] tracking-tight">
+            Trust, Safety & Student Verification
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Keeping the CampusHub marketplace safe, student-only, and free from scammers or commercial spammers.
+          <p className="text-xs sm:text-sm text-[#6B7280] leading-relaxed">
+            CampusHub is built strictly for authenticated students. No external commercial sellers, no hidden fees, and safe in-person handovers within college premises.
+          </p>
+        </div>
+      </section>
+
+      {/* 2. Four Pillars Grid */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+          <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
+            <UserCheck className="h-5 w-5" />
+          </div>
+          <h3 className="text-sm font-bold text-[#171717]">Roll Number Verification</h3>
+          <p className="text-xs text-[#6B7280] leading-relaxed">
+            Every seller and contributor must authenticate with valid college roll credentials and email OTP before listing items.
           </p>
         </div>
 
-        {/* 4 Pillars of Trust matching Slide 11 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Pillar 1 */}
-          <div className="rounded-xl border border-cyan-800/60 bg-slate-900/80 p-5 space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-800/50">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">1. Student Verification</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Registered using official university roll number & institutional domain (.edu / .ac.in).
-              </p>
-            </div>
-            <span className="inline-block rounded bg-cyan-950 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
-              No outsiders allowed
-            </span>
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+          <div className="h-10 w-10 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
+            <MapPin className="h-5 w-5" />
           </div>
-
-          {/* Pillar 2 */}
-          <div className="rounded-xl border border-emerald-800/60 bg-slate-900/80 p-5 space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-950 text-emerald-400 border border-emerald-800/50">
-              <MapPin className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">2. Campus-Only Trading</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                All pickups occur within campus boundaries: hostel common rooms, department lobbies, or campus cafeteria.
-              </p>
-            </div>
-            <span className="inline-block rounded bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-              Zero shipping risks
-            </span>
-          </div>
-
-          {/* Pillar 3 */}
-          <div className="rounded-xl border border-amber-800/60 bg-slate-900/80 p-5 space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-950 text-amber-400 border border-amber-800/50">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">3. Content Moderation</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Automated keywords flag prohibited items, external commercial ads, fake prices, and unauthorized materials.
-              </p>
-            </div>
-            <span className="inline-block rounded bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-300">
-              Live moderation filter
-            </span>
-          </div>
-
-          {/* Pillar 4 */}
-          <div className="rounded-xl border border-purple-800/60 bg-slate-900/80 p-5 space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-950 text-purple-400 border border-purple-800/50">
-              <Star className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">4. Ratings & Reviews</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Peer accountability builds a trustworthy campus reputation with public seller ratings and verified reviews.
-              </p>
-            </div>
-            <span className="inline-block rounded bg-purple-950 px-2 py-0.5 text-[10px] font-bold text-purple-300">
-              Transparent trust score
-            </span>
-          </div>
+          <h3 className="text-sm font-bold text-[#171717]">Campus Safe Zones</h3>
+          <p className="text-xs text-[#6B7280] leading-relaxed">
+            Physical handovers are scheduled in well-lit public campus hubs like the Central Library, Cafeteria, or Main Gate.
+          </p>
         </div>
-      </div>
 
-      {/* Interactive Verification Demo & Campus Safety Protocol */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Interactive Roll Number Authenticator */}
-        <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-6 space-y-4 shadow-xl">
-          <div className="border-b border-slate-800 pb-3">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Lock className="h-4 w-4 text-cyan-400" />
-              <span>Interactive Student ID Authenticator</span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              Simulate university database verification for incoming student signups
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+          <div className="h-10 w-10 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+            <Star className="h-5 w-5" />
+          </div>
+          <h3 className="text-sm font-bold text-[#171717]">Transparent Peer Reviews</h3>
+          <p className="text-xs text-[#6B7280] leading-relaxed">
+            Read authentic student ratings on textbook conditions and seller integrity before initiating contact.
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+          <div className="h-10 w-10 rounded-xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center">
+            <Flag className="h-5 w-5" />
+          </div>
+          <h3 className="text-sm font-bold text-[#171717]">Active Moderation</h3>
+          <p className="text-xs text-[#6B7280] leading-relaxed">
+            Prohibited listings or suspicious commercial activity get flagged and reviewed within minutes by student moderators.
+          </p>
+        </div>
+      </section>
+
+      {/* 3. Interactive Student Roll Number Verification Lookup */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-[#171717]">Live Student Authentication Lookup</h2>
+          <p className="text-xs text-[#6B7280]">
+            Enter a student’s University Roll Number to check their authenticated credentials before completing an exchange.
+          </p>
+        </div>
+
+        <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-2 max-w-xl">
+          <input
+            type="text"
+            value={lookupRoll}
+            onChange={(e) => setLookupRoll(e.target.value)}
+            placeholder="e.g. 2100540130042 or 2200540100089"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#2563EB]"
+          />
+          <button
+            type="submit"
+            className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5"
+          >
+            <Search className="h-4 w-4" />
+            <span>Verify Student</span>
+          </button>
+        </form>
+
+        {lookupResult && (
+          <div className="p-4 rounded-xl bg-[#DCFCE7] border border-green-200 space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#16A34A]">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Verified Campus Student Record Found</span>
+            </div>
+            <p className="text-xs text-[#171717] font-semibold">{lookupResult.name}</p>
+            <p className="text-[11px] text-[#6B7280]">
+              {lookupResult.course} • {lookupResult.college}
             </p>
           </div>
+        )}
+      </section>
 
-          <form onSubmit={handleVerifyStudent} className="space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Enter University Roll Number
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={testRoll}
-                  onChange={(e) => setTestRoll(e.target.value)}
-                  placeholder="e.g. 2500540130007"
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs sm:text-sm text-white focus:border-cyan-500 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="rounded-xl bg-cyan-600 hover:bg-cyan-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors"
-                >
-                  Verify
-                </button>
+      {/* 4. Safe Handover Zones List */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs space-y-4">
+        <h2 className="text-base font-bold text-[#171717]">Designated Campus Safe Exchange Zones</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[
+            { name: 'Central Campus Library Foyer', timing: '9:00 AM – 7:00 PM', landmark: 'Ground Floor Reading Hall' },
+            { name: 'Student Cafeteria & Food Court', timing: '8:00 AM – 8:00 PM', landmark: 'Main Entrance Seating' },
+            { name: 'Hostel Gate Security Booth', timing: '7:00 AM – 9:30 PM', landmark: 'Near Warden Office Checkpoint' },
+          ].map((zone) => (
+            <div key={zone.name} className="p-4 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5]/50 space-y-1.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#171717]">
+                <MapPin className="h-4 w-4 text-[#2563EB]" />
+                <span>{zone.name}</span>
               </div>
+              <p className="text-[11px] text-[#6B7280]">Recommended Timing: {zone.timing}</p>
+              <p className="text-[11px] text-[#6B7280]">Location: {zone.landmark}</p>
             </div>
-          </form>
-
-          {verificationResult && (
-            <div
-              className={`rounded-xl border p-4 space-y-2 ${
-                verificationResult.status === 'verified'
-                  ? 'border-emerald-700/80 bg-emerald-950/30 text-emerald-200'
-                  : 'border-rose-700/80 bg-rose-950/30 text-rose-200'
-              }`}
-            >
-              <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
-                {verificationResult.status === 'verified' ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span>Verified University Student Authenticated</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="h-4 w-4 text-rose-400" />
-                    <span>Roll Number Not Found in University Student Directory</span>
-                  </>
-                )}
-              </div>
-
-              {verificationResult.status === 'verified' && (
-                <div className="text-xs space-y-1 text-slate-300">
-                  <p><strong className="text-white">Name:</strong> {verificationResult.name}</p>
-                  <p><strong className="text-white">Program:</strong> {verificationResult.department}</p>
-                  <p><strong className="text-white">Institution:</strong> {verificationResult.college}</p>
-                </div>
-              )}
-            </div>
-          )}
+          ))}
         </div>
-
-        {/* Campus Safe Zones & Trading Rules */}
-        <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-6 space-y-4 shadow-xl">
-          <div className="border-b border-slate-800 pb-3">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Building className="h-4 w-4 text-emerald-400" />
-              <span>Campus Safe Meetup Guidelines</span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              CampusHub rules designed for student safety and convenience
-            </p>
-          </div>
-
-          <div className="space-y-2.5 text-xs text-slate-300">
-            <div className="flex items-start gap-2.5 rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-              <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">Always Meet During Daylight or in Well-Lit Lobbies:</strong> Meet at hostel entrances, student cafeterias, or library porticos.
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-              <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">Inspect Before Paying:</strong> Inspect cycle chains, book editions, and electronic appliance plugs before confirming the deal.
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-              <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">Direct UPI or Cash:</strong> Use direct peer-to-peer UPI (GPay/PhonePe) or exact cash at pickup. No online escrow links required.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -18,6 +18,7 @@ import {
   ResourceComment,
   PYQPaper,
   StudentProfile,
+  QuizResult,
 } from './types';
 import {
   INITIAL_MARKETPLACE_ITEMS,
@@ -467,17 +468,21 @@ export default function App() {
   };
 
   // Practice & AI Handlers
-  const handleUpdateDashboardStats = (newTestScore: number, primaryWeakArea?: string) => {
+  const handleUpdateDashboardStats = (result: QuizResult | number, primaryWeakArea?: string) => {
+    const score = typeof result === 'number' ? result : result.percentage;
+    const weakArea = typeof result === 'number' ? primaryWeakArea : (result.primaryWeakArea || primaryWeakArea);
+
     setProfile((prev) => {
       const newTests = prev.testsAttempted + 1;
       const newAvg = Math.round(
-        (prev.practiceScore * prev.testsAttempted + newTestScore) / newTests
+        (prev.practiceScore * prev.testsAttempted + score) / newTests
       );
       return {
         ...prev,
         testsAttempted: newTests,
         practiceScore: newAvg,
-        weakArea: primaryWeakArea || prev.weakArea,
+        weakArea: weakArea || prev.weakArea,
+        focusWeakTopic: weakArea || prev.focusWeakTopic,
       };
     });
   };
@@ -499,8 +504,8 @@ export default function App() {
   const savedResources = (resources || []).filter((r) => (savedResourceIds || []).includes(r.id));
 
   return (
-    <div className="min-h-screen bg-[#070c18] text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white">
-      {/* Top Navigation */}
+    <div className="min-h-screen bg-[#F7F7F5] text-[#171717] flex flex-col selection:bg-[#2563EB] selection:text-white">
+      {/* Top / Left Navigation */}
       <Navbar
         activeTab={activeTab}
         onNavigate={setActiveTab}
@@ -510,8 +515,8 @@ export default function App() {
         onOpenUploadModal={() => setIsUploadResourceModalOpen(true)}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      {/* Main Content Area (Offset by desktop sidebar w-64) */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-20 lg:pb-12 lg:pl-72">
         {activeTab === 'overview' && (
           <OverviewView onNavigate={setActiveTab} />
         )}
@@ -622,60 +627,27 @@ export default function App() {
         }}
       />
 
-      {/* Footer matching Slide 1 & Slide 12 */}
-      <footer className="border-t border-slate-800/80 bg-[#060a14] py-8 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Minimalist Light Footer */}
+      <footer className="border-t border-[#E5E7EB] bg-white py-6 text-xs text-[#6B7280] lg:pl-64">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-bold text-white">
-                Campus<span className="text-cyan-400">Hub</span> — All-in-One Student Ecosystem
+              <p className="text-xs font-bold text-[#171717]">
+                Campus<span className="text-[#2563EB]">Hub</span> — Student Productivity Ecosystem
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Buy • Sell • Study • Practice • Powered by Gemini AI
+              <p className="text-[11px] text-[#6B7280] mt-0.5">
+                Marketplace • Study Hub • AI Solutions • Exam Simulator
               </p>
             </div>
 
-            <div className="text-center sm:text-right">
-              <p className="text-xs font-semibold text-slate-300">
-                Built for College Students
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Verified Campus Student Network
-              </p>
+            <div className="flex flex-wrap gap-4 text-[11px]">
+              <button onClick={() => setActiveTab('overview')} className="hover:text-[#2563EB]">Overview</button>
+              <button onClick={() => setActiveTab('marketplace')} className="hover:text-[#2563EB]">Marketplace</button>
+              <button onClick={() => setActiveTab('study-hub')} className="hover:text-[#2563EB]">Study Hub</button>
+              <button onClick={() => setActiveTab('practice-engine')} className="hover:text-[#2563EB]">Practice</button>
+              <button onClick={() => setActiveTab('dashboard')} className="hover:text-[#2563EB]">Dashboard</button>
+              <button onClick={() => setActiveTab('trust-safety')} className="hover:text-[#2563EB]">Trust & Safety</button>
             </div>
-          </div>
-
-          <div className="border-t border-slate-900 pt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
-            <div className="flex flex-wrap gap-4">
-              <button onClick={() => setActiveTab('overview')} className="hover:text-cyan-400">
-                Home
-              </button>
-              <button onClick={() => setActiveTab('marketplace')} className="hover:text-cyan-400">
-                Marketplace
-              </button>
-              <button onClick={() => setActiveTab('study-hub')} className="hover:text-cyan-400">
-                Study Hub
-              </button>
-              <button onClick={() => setActiveTab('ai-assistant')} className="hover:text-cyan-400">
-                AI Assistant
-              </button>
-              <button onClick={() => setActiveTab('practice-engine')} className="hover:text-cyan-400">
-                Practice Engine
-              </button>
-              <button onClick={() => setActiveTab('pyq-bank')} className="hover:text-cyan-400">
-                PYQ Bank
-              </button>
-              <button onClick={() => setActiveTab('dashboard')} className="hover:text-cyan-400">
-                Dashboard
-              </button>
-              <button onClick={() => setActiveTab('trust-safety')} className="hover:text-cyan-400">
-                Trust & Safety
-              </button>
-            </div>
-
-            <p className="italic text-slate-400">
-              “From your 10th to graduation with competition — CampusHub stays with you.”
-            </p>
           </div>
         </div>
       </footer>

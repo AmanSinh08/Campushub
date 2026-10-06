@@ -7,19 +7,17 @@ import {
   Award,
   TrendingUp,
   AlertTriangle,
-  Clock,
   ArrowRight,
   CheckCircle2,
   Calendar,
   Sparkles,
-  ExternalLink,
   UploadCloud,
-  LogIn,
   Plus,
   FileText,
+  ExternalLink,
+  ChevronRight,
 } from 'lucide-react';
 import { StudentProfile, MarketplaceItem, StudyResource, ActiveTab } from '../types';
-import { PRESENTER_INFO } from '../data/mockData';
 
 interface DashboardViewProps {
   profile: StudentProfile;
@@ -52,24 +50,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   );
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Header & Profile Card */}
-      <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-6 sm:p-8 space-y-6 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div className="space-y-6 sm:space-y-8 pb-16">
+      {/* 1. GREETING / HEADER CARD */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 text-xl font-bold text-white shadow-lg">
-              {profile?.name ? profile.name[0] : 'S'}
+            <div className="h-14 w-14 rounded-2xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] text-xl font-bold flex items-center justify-center shrink-0">
+              {profile?.name ? profile.name.charAt(0).toUpperCase() : 'S'}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-white">{profile.name}</h1>
-                <span className="rounded-full bg-emerald-950 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-800 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span>Verified Student</span>
-                </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#171717] tracking-tight">
+                  Welcome back, {profile?.name || 'Student'}
+                </h1>
+                {profile?.verified && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#16A34A] border border-green-200">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span>Verified</span>
+                  </span>
+                )}
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-                Roll No: <span className="font-mono text-slate-300">{profile.rollNo}</span> • {profile.course} • Year {profile.year} • {profile.college}
+              <p className="text-xs text-[#6B7280] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className="font-mono text-[#171717] font-semibold">Roll: {profile?.rollNo || '2100540130042'}</span>
+                <span>•</span>
+                <span>{profile?.course || 'B.Tech CSE'}</span>
+                <span>•</span>
+                <span>{profile?.year || '3rd Year'}</span>
+                <span>•</span>
+                <span className="text-[#6B7280]">{profile?.college || 'BBDITM'}</span>
               </p>
             </div>
           </div>
@@ -77,9 +85,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             {onOpenUploadModal && (
               <button
-                id="dashboard-upload-btn"
                 onClick={onOpenUploadModal}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-cyan-900/30 transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
               >
                 <UploadCloud className="h-4 w-4" />
                 <span>Upload PDF / Notes</span>
@@ -88,104 +95,273 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             {onOpenAuthModal && (
               <button
-                id="dashboard-manage-profile-btn"
                 onClick={onOpenAuthModal}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-200 transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#171717] border border-[#E5E7EB] text-xs font-medium transition-all"
               >
-                <User className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Profile & Login</span>
+                <User className="h-3.5 w-3.5 text-[#6B7280]" />
+                <span>Account Profile</span>
               </button>
             )}
           </div>
         </div>
+      </section>
 
-        {/* 4 Hero Stats matching Slide 10 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+      {/* 2. IMPORTANT SUMMARY CARDS */}
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {/* Metric 1 */}
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
               Active Listings
             </span>
-            <p className="text-2xl font-bold text-white mt-1">{myListings?.length || 0}</p>
-            <p className="text-[10px] text-cyan-400 mt-0.5">Campus Marketplace</p>
+            <div className="h-7 w-7 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
+              <ShoppingBag className="h-3.5 w-3.5" />
+            </div>
           </div>
-
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-              Saved Study Hub
-            </span>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">{savedResources?.length || 0}</p>
-            <p className="text-[10px] text-emerald-300 mt-0.5">Textbooks & PYQs</p>
-          </div>
-
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-              Adaptive Practice
-            </span>
-            <p className="text-2xl font-bold text-amber-400 mt-1">{profile.practiceScore}%</p>
-            <p className="text-[10px] text-amber-300 mt-0.5">{profile.testsAttempted} Tests Completed</p>
-          </div>
-
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-              Primary Weak Area
-            </span>
-            <p className="text-sm font-bold text-rose-400 mt-1 truncate" title={profile.weakArea}>
-              {profile.weakArea}
-            </p>
-            <p className="text-[10px] text-rose-300 mt-0.5">Diagnosed by AI</p>
+          <div className="mt-2">
+            <p className="text-2xl font-bold text-[#171717]">{myListings?.length || 0}</p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5">Marketplace peer items</p>
           </div>
         </div>
-      </div>
 
-      {/* Main Dashboard Layout: 2 Columns */}
+        {/* Metric 2 */}
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+              Saved Library
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
+              <BookOpen className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-2xl font-bold text-[#16A34A]">{savedResources?.length || 0}</p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5">Bookmarked textbooks & notes</p>
+          </div>
+        </div>
+
+        {/* Metric 3 */}
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+              Practice Score
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+              <Target className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-2xl font-bold text-[#D97706]">{profile.practiceScore}%</p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5">{profile.testsAttempted} mock tests taken</p>
+          </div>
+        </div>
+
+        {/* Metric 4 */}
+        <div className="rounded-2xl bg-white border border-[#E5E7EB] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+              Diagnosed Weakness
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center">
+              <AlertTriangle className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-xs sm:text-sm font-bold text-[#DC2626] truncate" title={profile.weakArea}>
+              {profile.weakArea}
+            </p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5">Target review recommended</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. TODAY'S FOCUS & WEAK AREA DRILL BANNER */}
+      <section className="rounded-2xl bg-[#EFF6FF] border border-[#DBEAFE] p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="h-10 w-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-[#171717]">
+              Today's Recommended Drill: {profile.focusWeakTopic || profile.weakArea}
+            </h2>
+            <p className="text-xs text-[#6B7280] mt-0.5">
+              Target this diagnosed topic before the upcoming semester examination to boost your overall mastery score.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onNavigate('practice-engine')}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs shrink-0 transition-all active:scale-[0.98]"
+        >
+          <Target className="h-3.5 w-3.5" />
+          <span>Launch Topic Quiz</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
+      </section>
+
+      {/* 4. MAIN TWO-COLUMN WORKSPACE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (7 cols): Active Listings & Saved Study Resources */}
+        {/* Left Column (7 cols): Saved Notes & Marketplace Listings */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Active Listings Section */}
-          <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          {/* Saved Resources Card */}
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-cyan-400" />
-                <h2 className="text-sm font-bold text-white">My Active Campus Listings</h2>
+                <BookOpen className="h-4 w-4 text-[#2563EB]" />
+                <h3 className="text-sm font-bold text-[#171717]">Saved Notes & Textbooks</h3>
+              </div>
+              <button
+                onClick={() => onNavigate('study-hub')}
+                className="text-xs text-[#2563EB] hover:underline font-semibold flex items-center gap-1"
+              >
+                <span>Browse All</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {(savedResources?.length || 0) === 0 ? (
+              <div className="py-6 text-center text-xs text-[#6B7280]">
+                No saved resources yet. Bookmark key textbooks in Study Hub to read them here.
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {savedResources.map((res) => (
+                  <div
+                    key={res.id}
+                    className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F7F7F5]/50 p-3 hover:bg-white hover:border-[#2563EB]/40 transition-all gap-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="inline-block rounded bg-[#EFF6FF] text-[#2563EB] text-[9px] font-bold uppercase px-1.5 py-0.5">
+                        {res.category}
+                      </span>
+                      <h4 className="text-xs font-bold text-[#171717] mt-1 truncate">{res.title}</h4>
+                      <p className="text-[11px] text-[#6B7280] truncate">{res.subject} • {res.author}</p>
+                    </div>
+                    <button
+                      onClick={() => onNavigate('study-hub')}
+                      className="px-3 py-1.5 rounded-lg bg-white border border-[#E5E7EB] hover:border-[#2563EB] text-xs font-semibold text-[#171717] hover:text-[#2563EB] shrink-0 transition-colors"
+                    >
+                      Read Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* My Uploaded Materials */}
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
+              <div className="flex items-center gap-2">
+                <UploadCloud className="h-4 w-4 text-[#16A34A]" />
+                <h3 className="text-sm font-bold text-[#171717]">
+                  My Uploaded Notes & PDFs ({myUploads?.length || 0})
+                </h3>
+              </div>
+              {onOpenUploadModal && (
+                <button
+                  onClick={onOpenUploadModal}
+                  className="text-xs text-[#2563EB] hover:underline font-semibold flex items-center gap-1"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Upload More</span>
+                </button>
+              )}
+            </div>
+
+            {(myUploads?.length || 0) === 0 ? (
+              <div className="rounded-xl border border-dashed border-[#E5E7EB] p-6 text-center space-y-2">
+                <FileText className="h-8 w-8 text-[#9CA3AF] mx-auto" />
+                <p className="text-xs font-semibold text-[#171717]">No notes or books uploaded yet</p>
+                <p className="text-[11px] text-[#6B7280]">
+                  Share your topper notes or authorized PDF resources with batchmates across colleges.
+                </p>
+                {onOpenUploadModal && (
+                  <button
+                    onClick={onOpenUploadModal}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2563EB] text-white text-xs font-semibold"
+                  >
+                    <UploadCloud className="h-3.5 w-3.5" />
+                    <span>Upload First PDF</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {myUploads.map((res) => (
+                  <div
+                    key={res.id}
+                    className="flex items-center justify-between rounded-xl border border-[#E5E7EB] p-3 bg-white hover:border-[#E5E7EB] gap-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-[#DCFCE7] text-[#16A34A] text-[9px] font-bold uppercase px-1.5 py-0.5">
+                          {res.category}
+                        </span>
+                        <span className="text-[10px] text-[#16A34A] font-semibold">✓ Live on Campus</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-[#171717] mt-1 truncate">{res.title}</h4>
+                      <p className="text-[11px] text-[#6B7280] truncate">{res.subject} • {res.fileSize || 'PDF'}</p>
+                    </div>
+                    <button
+                      onClick={() => onNavigate('study-hub')}
+                      className="px-3 py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-gray-200/80 text-xs font-medium text-[#171717] shrink-0"
+                    >
+                      View in Hub
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Active Marketplace Listings */}
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-[#2563EB]" />
+                <h3 className="text-sm font-bold text-[#171717]">My Campus Marketplace Listings</h3>
               </div>
               <button
                 onClick={() => onNavigate('marketplace')}
-                className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold"
+                className="text-xs text-[#2563EB] hover:underline font-semibold flex items-center gap-1"
               >
-                <span>Add / Manage</span>
-                <ArrowRight className="h-3 w-3" />
+                <span>Add New</span>
+                <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
 
             {(myListings?.length || 0) === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No active listings yet.</p>
+              <p className="text-xs text-[#6B7280] py-4 text-center">No active listings currently on sale.</p>
             ) : (
               <div className="space-y-3">
                 {myListings.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3.5 hover:border-slate-700"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E5E7EB] bg-white p-3.5 hover:shadow-xs transition-all"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <img
                         src={item.imageUrl}
                         alt={item.title}
-                        className="h-12 w-12 rounded-lg object-cover bg-slate-950"
+                        className="h-12 w-12 rounded-xl object-cover bg-gray-100 shrink-0 border border-[#E5E7EB]"
                       />
-                      <div>
-                        <h3 className="text-xs sm:text-sm font-bold text-white line-clamp-1">{item.title}</h3>
-                        <p className="text-[11px] text-slate-400">
+                      <div className="min-w-0 truncate">
+                        <h4 className="text-xs sm:text-sm font-bold text-[#171717] truncate">{item.title}</h4>
+                        <p className="text-[11px] text-[#6B7280] truncate">
                           ₹{item.price} • {item.condition} • {item.location}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                           item.status === 'available'
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : 'bg-rose-950 text-rose-400 border border-rose-800'
+                            ? 'bg-[#DCFCE7] text-[#16A34A]'
+                            : 'bg-[#FEE2E2] text-[#DC2626]'
                         }`}
                       >
                         {item.status.toUpperCase()}
@@ -197,7 +373,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             item.status === 'available' ? 'sold' : 'available'
                           )
                         }
-                        className="rounded-lg bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-[11px] font-semibold text-slate-200"
+                        className="rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F7F7F5] px-3 py-1 text-xs font-semibold text-[#171717] transition-colors"
                       >
                         {item.status === 'available' ? 'Mark Sold' : 'Relist'}
                       </button>
@@ -207,153 +383,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             )}
           </div>
-
-          {/* Saved Resources Section */}
-          <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-emerald-400" />
-                <h2 className="text-sm font-bold text-white">Saved Resources & Textbooks</h2>
-              </div>
-              <button
-                onClick={() => onNavigate('study-hub')}
-                className="text-xs text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
-              >
-                <span>Browse Hub</span>
-                <ArrowRight className="h-3 w-3" />
-              </button>
-            </div>
-
-            {(savedResources?.length || 0) === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">
-                No saved resources yet. Explore the Digital Study Hub to bookmark curriculum materials!
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {savedResources.map((res) => (
-                  <div
-                    key={res.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-3 hover:border-slate-700"
-                  >
-                    <div>
-                      <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-bold uppercase text-cyan-300">
-                        {res.category}
-                      </span>
-                      <h4 className="text-xs font-semibold text-white mt-1">{res.title}</h4>
-                      <p className="text-[11px] text-slate-400">{res.subject} • {res.author}</p>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('study-hub')}
-                      className="rounded-lg bg-cyan-950 border border-cyan-800/80 text-cyan-300 hover:bg-cyan-900 px-3 py-1 text-xs font-semibold"
-                    >
-                      Open
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* My Uploaded Materials Section */}
-          <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <UploadCloud className="h-4 w-4 text-cyan-400" />
-                <h2 className="text-sm font-bold text-white">My Uploaded Books & Notes ({myUploads?.length || 0})</h2>
-              </div>
-              {onOpenUploadModal && (
-                <button
-                  onClick={onOpenUploadModal}
-                  className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold"
-                >
-                  <Plus className="h-3 w-3" />
-                  <span>Upload New</span>
-                </button>
-              )}
-            </div>
-
-            {(myUploads?.length || 0) === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900/40 p-5 text-center space-y-2.5">
-                <FileText className="h-7 w-7 text-slate-500 mx-auto" />
-                <div>
-                  <p className="text-xs font-semibold text-slate-300">You haven't uploaded any books or notes yet</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Share authorized PDF books or topper notes. Once uploaded, they automatically appear in the Study Hub for all students!
-                  </p>
-                </div>
-                {onOpenUploadModal && (
-                  <button
-                    onClick={onOpenUploadModal}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
-                  >
-                    <UploadCloud className="h-3.5 w-3.5" />
-                    <span>Upload Book / Notes Now</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {myUploads.map((res) => (
-                  <div
-                    key={res.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-3 hover:border-slate-700"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-cyan-950 text-cyan-300 border border-cyan-800/60 px-1.5 py-0.5 text-[9px] font-bold uppercase">
-                          {res.category}
-                        </span>
-                        <span className="text-[10px] text-emerald-400 font-medium">
-                          ✓ Live for All Students
-                        </span>
-                      </div>
-                      <h4 className="text-xs font-semibold text-white">{res.title}</h4>
-                      <p className="text-[11px] text-slate-400">
-                        {res.subject} • {res.fileSize} {res.pages ? `• ${res.pages} pages` : ''}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('study-hub')}
-                      className="rounded-lg bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 px-3 py-1 text-xs font-semibold"
-                    >
-                      View in Hub
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* Right Column (5 cols): AI Weakness Tracker & Recommended Next Steps */}
+        {/* Right Column (5 cols): Academic Information & Concept Mastery */}
         <div className="lg:col-span-5 space-y-6">
-          {/* AI Weakness Tracker Card (Slide 10) */}
-          <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-4 shadow-xl">
-            <div className="border-b border-slate-800 pb-3">
+          {/* Concept Mastery Breakdown */}
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-4">
+            <div className="border-b border-[#E5E7EB] pb-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-400" />
-                <h3 className="text-sm font-bold text-white">AI Weakness Tracker</h3>
+                <TrendingUp className="h-4 w-4 text-[#2563EB]" />
+                <h3 className="text-sm font-bold text-[#171717]">Academic Concept Mastery</h3>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Automated concept mastery breakdown derived from test attempts
+              <p className="text-[11px] text-[#6B7280] mt-0.5">
+                Real-time tracking computed from your recent semester drills
               </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {[
-                { concept: 'TCP Congestion Control (Tahoe / Reno)', mastery: 42, color: 'bg-rose-500' },
-                { concept: 'Database Normalization (BCNF vs 3NF)', mastery: 68, color: 'bg-amber-500' },
-                { concept: 'AVL Tree Double Rotations', mastery: 85, color: 'bg-emerald-500' },
-                { concept: 'Process Deadlock Banker’s Algorithm', mastery: 74, color: 'bg-blue-500' },
+                { concept: 'TCP Congestion Control (Tahoe / Reno)', mastery: 42, color: 'bg-[#DC2626]' },
+                { concept: 'Database Normalization (BCNF vs 3NF)', mastery: 68, color: 'bg-[#D97706]' },
+                { concept: 'AVL Tree Double Rotations', mastery: 85, color: 'bg-[#16A34A]' },
+                { concept: 'Process Deadlock Banker’s Algorithm', mastery: 74, color: 'bg-[#2563EB]' },
               ].map((c) => (
-                <div key={c.concept} className="space-y-1">
+                <div key={c.concept} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-200">{c.concept}</span>
-                    <span className="font-bold text-slate-400">{c.mastery}%</span>
+                    <span className="font-semibold text-[#171717] truncate mr-2">{c.concept}</span>
+                    <span className="font-mono font-bold text-[#6B7280] shrink-0">{c.mastery}%</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-[#E5E7EB] overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${c.color}`}
+                      className={`h-full rounded-full ${c.color} transition-all`}
                       style={{ width: `${c.mastery}%` }}
                     />
                   </div>
@@ -363,51 +423,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => onNavigate('practice-engine')}
-              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 py-2 text-xs font-semibold text-white shadow-md transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] py-2.5 text-xs font-semibold transition-colors"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Launch Drill for Weak Areas</span>
+              <Target className="h-3.5 w-3.5" />
+              <span>Launch Adaptive Practice Test</span>
             </button>
           </div>
 
-          {/* Recommended Next Steps (Slide 10) */}
-          <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-3 shadow-xl">
-            <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-2">
-              Recommended Next Steps
+          {/* Recommended Next Actions */}
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs space-y-3">
+            <h3 className="text-sm font-bold text-[#171717] border-b border-[#E5E7EB] pb-2">
+              Next Recommended Actions
             </h3>
 
-            <div className="space-y-2 text-xs">
+            <div className="space-y-2.5 text-xs">
               <div
                 onClick={() => onNavigate('pyq-bank')}
-                className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/60 p-3 hover:border-amber-500/50 transition-colors flex items-center justify-between"
+                className="cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3"
               >
                 <div>
-                  <p className="font-semibold text-white">Solve 2025 DBMS End-Sem Paper</p>
-                  <p className="text-[11px] text-slate-400">Exam scheduled in 3 weeks</p>
+                  <p className="font-bold text-[#171717]">Review 2025 DBMS Exam Paper</p>
+                  <p className="text-[11px] text-[#6B7280] mt-0.5">Step-by-step marking answers included</p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-amber-400" />
+                <ChevronRight className="h-4 w-4 text-[#9CA3AF] shrink-0" />
               </div>
 
               <div
                 onClick={() => onNavigate('ai-assistant')}
-                className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/60 p-3 hover:border-purple-500/50 transition-colors flex items-center justify-between"
+                className="cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3"
               >
                 <div>
-                  <p className="font-semibold text-white">Ask AI: 5-min Revision for TCP</p>
-                  <p className="text-[11px] text-slate-400">Strengthen diagnosed weakness</p>
+                  <p className="font-bold text-[#171717]">Ask AI: 5-min Revision for TCP</p>
+                  <p className="text-[11px] text-[#6B7280] mt-0.5">Focus on your diagnosed weak area</p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-purple-400" />
+                <ChevronRight className="h-4 w-4 text-[#9CA3AF] shrink-0" />
               </div>
 
               <div
                 onClick={() => onNavigate('marketplace')}
-                className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/60 p-3 hover:border-cyan-500/50 transition-colors flex items-center justify-between"
+                className="cursor-pointer rounded-xl border border-[#E5E7EB] p-3 hover:border-[#2563EB] hover:bg-[#F7F7F5]/60 transition-all flex items-center justify-between gap-3"
               >
                 <div>
-                  <p className="font-semibold text-white">Check Senior Textbook Listings</p>
-                  <p className="text-[11px] text-slate-400">4 new books listed in Boys Hostel</p>
+                  <p className="font-bold text-[#171717]">Browse Senior Textbook Listings</p>
+                  <p className="text-[11px] text-[#6B7280] mt-0.5">Discounted semester books on campus</p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-cyan-400" />
+                <ChevronRight className="h-4 w-4 text-[#9CA3AF] shrink-0" />
               </div>
             </div>
           </div>

@@ -5,6 +5,13 @@ import {
   FileQuestion,
   Sparkles,
   ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  TrendingUp,
+  Award,
+  Layers,
+  Search,
+  Plus,
 } from 'lucide-react';
 import { ActiveTab } from '../types';
 
@@ -13,166 +20,177 @@ interface OverviewViewProps {
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
-  const modules = [
-    {
-      id: 'marketplace' as ActiveTab,
-      title: 'Student Marketplace',
-      tagline: 'Buy and sell books, cycles, electronics, furniture, hostel items and more.',
-      icon: ShoppingBag,
-      color: 'border-cyan-500/40 bg-cyan-950/20 text-cyan-400',
-      actionText: 'Explore Marketplace',
-    },
-    {
-      id: 'study-hub' as ActiveTab,
-      title: 'Digital Study Hub',
-      tagline: 'Find curriculum textbooks, toppers handwritten notes, and authorized resources.',
-      icon: BookOpen,
-      color: 'border-emerald-500/40 bg-emerald-950/20 text-emerald-400',
-      actionText: 'Open Study Hub',
-    },
-    {
-      id: 'pyq-bank' as ActiveTab,
-      title: 'PYQ Bank + AI',
-      tagline: 'Access previous-year university questions by course, semester, subject & exam.',
-      icon: FileQuestion,
-      color: 'border-amber-500/40 bg-amber-950/20 text-amber-400',
-      actionText: 'Browse PYQ Papers',
-    },
-    {
-      id: 'ai-assistant' as ActiveTab,
-      title: 'AI Study Assistant',
-      tagline: 'Understand topics, get bullet summaries, solve doubts and practice with AI.',
-      icon: Sparkles,
-      color: 'border-purple-500/40 bg-purple-950/20 text-purple-400',
-      actionText: 'Launch AI Buddy',
-    },
-  ];
-
   return (
-    <div className="space-y-12 pb-16">
-      {/* Slide 1 Hero Banner: ALL-IN-ONE STUDENT ECOSYSTEM */}
-      <section className="relative overflow-hidden rounded-2xl border border-cyan-900/60 bg-gradient-to-b from-[#0e172a] via-[#0B1120] to-[#070c18] p-6 sm:p-10 text-center shadow-2xl">
-        <div className="mx-auto max-w-4xl space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-950/60 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-300">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>ALL-IN-ONE STUDENT ECOSYSTEM</span>
+    <div className="space-y-8 pb-16">
+      {/* Hero Banner Card */}
+      <section className="relative overflow-hidden rounded-2xl bg-white border border-[#E5E7EB] p-6 sm:p-8 md:p-10 shadow-xs">
+        <div className="max-w-3xl space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold border border-[#DBEAFE]">
+            <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse"></span>
+            <span>All-In-One Campus Productivity Ecosystem</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white">
-            Campus<span className="text-cyan-400">Hub</span>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#171717] tracking-tight leading-tight">
+            Everything for your campus life, <br className="hidden sm:inline" />
+            <span className="text-[#2563EB]">in one unified workspace.</span>
           </h1>
 
-          <p className="text-xl sm:text-2xl font-semibold text-cyan-200">
-            Buy • Sell • Study • Practice
+          <p className="text-sm sm:text-base text-[#6B7280] leading-relaxed">
+            Buy & sell textbooks within your hostel safely, read verified topper notes, solve previous year questions with step-by-step AI answers, and track your semester prep.
           </p>
 
-          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto">
-            Everything a student needs, in one place. Built exclusively for university and campus life to bridge peer commerce and smart AI-guided academics.
-          </p>
-
-          {/* 4 quick module navigation chips matching Slide 1 */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-3">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               onClick={() => onNavigate('marketplace')}
-              className="rounded-full border border-cyan-500/50 bg-cyan-950/50 hover:bg-cyan-900/50 px-4 py-2 text-xs font-semibold text-cyan-300 transition-all hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all active:scale-[0.98]"
             >
-              Buying & Selling
+              <ShoppingBag className="h-4 w-4" />
+              <span>Explore Marketplace</span>
+              <ArrowRight className="h-4 w-4" />
             </button>
+
             <button
               onClick={() => onNavigate('study-hub')}
-              className="rounded-full border border-emerald-500/50 bg-emerald-950/50 hover:bg-emerald-900/50 px-4 py-2 text-xs font-semibold text-emerald-300 transition-all hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#171717] border border-[#E5E7EB] text-xs sm:text-sm font-medium transition-all"
             >
-              Books & Study Material
-            </button>
-            <button
-              onClick={() => onNavigate('pyq-bank')}
-              className="rounded-full border border-amber-500/50 bg-amber-950/50 hover:bg-amber-900/50 px-4 py-2 text-xs font-semibold text-amber-300 transition-all hover:scale-105"
-            >
-              PYQs & Practice
-            </button>
-            <button
-              onClick={() => onNavigate('ai-assistant')}
-              className="rounded-full border border-purple-500/50 bg-purple-950/50 hover:bg-purple-900/50 px-4 py-2 text-xs font-semibold text-purple-300 transition-all hover:scale-105"
-            >
-              AI-Powered Learning
+              <BookOpen className="h-4 w-4 text-[#2563EB]" />
+              <span>Browse Study Notes & PDFs</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* What is CampusHub? 4 Modules */}
-      <section className="space-y-6">
-        <div className="border-b border-slate-800 pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">WELCOME TO CAMPUSHUB</span>
-          <h2 className="text-2xl font-bold text-white mt-1">What is CampusHub?</h2>
-          <p className="text-sm text-slate-400">One Platform for Every Student Need</p>
+      {/* 4 Core Pillars Grid */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-[#171717]">Campus Ecosystem Features</h2>
+            <p className="text-xs text-[#6B7280]">Select a workspace to start studying or trading</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {modules.map((m) => {
-            const Icon = m.icon;
-            return (
-              <div
-                key={m.id}
-                className={`flex flex-col justify-between rounded-xl border p-6 transition-all hover:border-slate-600 ${m.color}`}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900/80">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white">{m.title}</h3>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{m.tagline}</p>
-                </div>
-                <button
-                  onClick={() => onNavigate(m.id)}
-                  className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-white hover:underline"
-                >
-                  <span>{m.actionText}</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Marketplace */}
+          <div
+            onClick={() => onNavigate('marketplace')}
+            className="group cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-5 hover:border-[#2563EB]/40 hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
+                <ShoppingBag className="h-5 w-5" />
               </div>
-            );
-          })}
-        </div>
+              <h3 className="text-sm font-bold text-[#171717]">Campus Marketplace</h3>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                Buy & sell textbooks, calculators, cycles, and study lamps with roll-number verified peers. Zero commission.
+              </p>
+            </div>
+            <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-[#2563EB] group-hover:translate-x-0.5 transition-transform">
+              <span>View Listings</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </div>
 
-        <div className="rounded-xl border border-cyan-800/60 bg-cyan-950/30 p-3 text-center text-sm font-semibold text-cyan-300">
-          Buy ➔ Sell ➔ Study ➔ Practice
+          {/* Card 2: Study Hub */}
+          <div
+            onClick={() => onNavigate('study-hub')}
+            className="group cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-5 hover:border-[#2563EB]/40 hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-bold text-[#171717]">Study Hub & Notes</h3>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                Access curated textbooks, verified topper notes, and course PDFs with built-in interactive reader and peer reviews.
+              </p>
+            </div>
+            <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-[#2563EB] group-hover:translate-x-0.5 transition-transform">
+              <span>Open Library</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          {/* Card 3: PYQ Bank */}
+          <div
+            onClick={() => onNavigate('pyq-bank')}
+            className="group cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-5 hover:border-[#2563EB]/40 hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
+                <FileQuestion className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-bold text-[#171717]">PYQ Bank & Solutions</h3>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                Previous year university question papers with AI-generated step-by-step marking scheme answers and code.
+              </p>
+            </div>
+            <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-[#2563EB] group-hover:translate-x-0.5 transition-transform">
+              <span>Browse Papers</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          {/* Card 4: Practice Engine */}
+          <div
+            onClick={() => onNavigate('practice-engine')}
+            className="group cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-5 hover:border-[#2563EB]/40 hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-bold text-[#171717]">Practice & AI Assistant</h3>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                Take timed semester practice tests, detect topic weak areas, and ask complex academic queries instantly.
+              </p>
+            </div>
+            <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-[#2563EB] group-hover:translate-x-0.5 transition-transform">
+              <span>Start Practice</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* The CampusHub Vision */}
-      <section className="rounded-2xl border border-slate-800 bg-[#0c1322] p-8 text-center space-y-6">
-        <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">THE CAMPUSHUB VISION</span>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">One Platform. Complete Student Experience.</h2>
+      {/* Trust & Safety highlights */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-6 shadow-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex items-start gap-3.5">
+            <div className="h-9 w-9 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#171717]">Roll Number Verified</h4>
+              <p className="text-xs text-[#6B7280] mt-0.5">
+                Only authenticated university students with valid roll numbers and email OTP can trade or post notes.
+              </p>
+            </div>
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 max-w-4xl mx-auto">
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-base font-bold text-cyan-400">Buy</p>
-            <p className="text-xs text-slate-400 mt-1">Affordable student items</p>
+          <div className="flex items-start gap-3.5">
+            <div className="h-9 w-9 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#171717]">Campus Safe Zones</h4>
+              <p className="text-xs text-[#6B7280] mt-0.5">
+                Designated in-person exchange spots at college library, cafeteria, and hostel main gates.
+              </p>
+            </div>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-base font-bold text-emerald-400">Sell</p>
-            <p className="text-xs text-slate-400 mt-1">Unused hostel items</p>
-          </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-base font-bold text-blue-400">Study</p>
-            <p className="text-xs text-slate-400 mt-1">Curated books & notes</p>
-          </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-base font-bold text-amber-400">Practice</p>
-            <p className="text-xs text-slate-400 mt-1">PYQs & mock tests</p>
-          </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 col-span-2 sm:col-span-1">
-            <p className="text-base font-bold text-purple-400">Learn</p>
-            <p className="text-xs text-slate-400 mt-1">AI-powered guidance</p>
+
+          <div className="flex items-start gap-3.5">
+            <div className="h-9 w-9 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#171717]">Academic Tracking</h4>
+              <p className="text-xs text-[#6B7280] mt-0.5">
+                Automatically tracks test history, identifies weak concepts, and recommends target revision notes.
+              </p>
+            </div>
           </div>
         </div>
-
-        <blockquote className="italic text-base sm:text-lg text-slate-300 font-medium">
-          “From your 10th to graduation with competition — CampusHub stays with you.”
-        </blockquote>
       </section>
     </div>
   );

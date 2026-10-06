@@ -17,6 +17,7 @@ import {
   Smartphone,
   AlertCircle,
   Eye,
+  Plus,
 } from 'lucide-react';
 import { MarketplaceItem, MarketplaceCategory, ItemCondition, StudentProfile } from '../types';
 
@@ -64,13 +65,12 @@ const SAMPLE_IMAGES: { label: string; url: string; category: MarketplaceCategory
     category: 'Fans, Tables, Chairs & Lamps',
   },
   {
-    label: 'Noise-Cancelling Headphones',
+    label: 'Headphones',
     url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
     category: 'Headphones, Keyboards & Monitors',
   },
 ];
 
-// Helper to optimize real camera and gallery images for instant preview & lightweight storage
 const compressImageFile = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {
@@ -126,71 +126,67 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [imageSource, setImageSource] = useState<'camera' | 'gallery' | 'url' | 'sample' | null>(null);
-  const [sellerCollege, setSellerCollege] = useState(profile.college || 'Babu Banarasi Das Institute of Technology and Management (BBDITM)');
+  const [sellerCollege, setSellerCollege] = useState(profile.college || 'BBDITM');
   const [sellerCity, setSellerCity] = useState('Lucknow');
-  const [phone, setPhone] = useState(profile.phone || (profile.rollNo ? `+91 98765 ${profile.rollNo.slice(-4) || '4321'}` : '+91 98765 43210'));
+  const [phone, setPhone] = useState(profile.phone || '+91 98765 43210');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Sync profile college when modal opens or profile changes
+  // Camera state
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isCameraStarting, setIsCameraStarting] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (isOpen && profile?.college) {
       setSellerCollege(profile.college);
       if (profile.phone) setPhone(profile.phone);
     }
-  }, [isOpen, profile?.college, profile?.phone]);
+  }, [isOpen, profile]);
 
-  // Real Camera & Gallery states
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [isCameraStarting, setIsCameraStarting] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const galleryInputRef = useRef<HTMLInputElement | null>(null);
-  const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Stop camera media tracks cleanly
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
     }
     setIsCameraActive(false);
     setIsCameraStarting(false);
+    setCameraError(null);
   };
 
-  // Start live in-app camera viewfinder
-  const startCamera = async (facing: 'environment' | 'user' = cameraFacing) => {
+  const startCamera = async (facing: 'environment' | 'user' = 'environment') => {
     stopCamera();
-    setCameraError(null);
     setIsCameraStarting(true);
     setIsCameraActive(true);
+    setCameraError(null);
 
     try {
       const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: facing,
+          facingMode: { ideal: facing },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
         audio: false,
       };
+
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
+      mediaStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
+        await videoRef.current.play();
       }
       setIsCameraStarting(false);
     } catch (err: any) {
-      console.warn('Live camera error:', err);
       setIsCameraStarting(false);
-      setCameraError(
-        'Camera permission was denied or camera is unavailable. You can click "Native Camera" or "Gallery" to upload.'
-      );
+      setCameraError('Camera access denied or unavailable. Please use file picker or sample image.');
     }
   };
 
@@ -209,12 +205,12 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       setImageUrl(dataUrl);
       setImageSource('camera');
       setErrorMsg('');
+      stopCamera();
     }
-    stopCamera();
   };
 
   const handleClose = () => {
@@ -222,31 +218,17 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
     onClose();
   };
 
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  const handleFilePicked = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    source: 'camera' | 'gallery'
-  ) => {
+  const handleFilePicked = async (e: React.ChangeEvent<HTMLInputElement>, source: 'gallery' | 'camera') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 15 * 1024 * 1024) {
-        setErrorMsg('Image size exceeds 15MB. Please choose a smaller photo.');
-        return;
-      }
       try {
         const compressed = await compressImageFile(file);
         setImageUrl(compressed);
         setImageSource(source);
         setErrorMsg('');
-      } catch (err) {
-        setErrorMsg('Failed to process image file. Please try another.');
+      } catch (err: any) {
+        setErrorMsg('Could not process selected image file.');
       }
-      e.target.value = '';
     }
   };
 
@@ -311,7 +293,7 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
         sellerRoll: profile.rollNo,
         sellerBranch: profile.course,
         sellerYear: profile.year,
-        sellerCollege: sellerCollege.trim() || profile.college || 'Babu Banarasi Das Institute of Technology and Management (BBDITM)',
+        sellerCollege: sellerCollege.trim() || profile.college || 'BBDITM',
         sellerCity: sellerCity.trim() || 'Lucknow',
         contactPhone: phone.trim() || '+91 98765 43210',
       });
@@ -325,7 +307,7 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
       stopCamera();
       onClose();
       if (onSuccess) onSuccess();
-    } catch (err) {
+    } catch {
       setErrorMsg('Failed to publish listing. Please check connection.');
     } finally {
       setIsSubmitting(false);
@@ -333,53 +315,51 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-700 bg-[#0f172a] p-6 shadow-2xl space-y-5 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-lg rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4 max-h-[94vh] overflow-y-auto my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-              <PlusCircle className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center border border-[#DBEAFE] shrink-0">
+              <Plus className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white">Sell on CampusHub</h3>
-              <p className="text-xs text-slate-400">List books, stationery, electronics or cycles for students</p>
+              <h3 className="text-base sm:text-lg font-bold text-[#171717]">Sell on CampusHub</h3>
+              <p className="text-xs text-[#6B7280]">List textbooks, stationery, cycles or electronics</p>
             </div>
           </div>
           <button
             id="close-sell-modal"
             onClick={handleClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#171717]"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {errorMsg && (
-          <div className="rounded-xl border border-rose-800/80 bg-rose-950/50 p-3 text-xs text-rose-300 flex items-center gap-2">
+          <div className="rounded-xl border border-red-200 bg-[#FEE2E2] p-3 text-xs text-[#DC2626] flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Seller Info badge */}
-        <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs">
+        <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F7F7F5] px-3.5 py-2 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-slate-400">Listing as:</span>
-            <span className="font-semibold text-white">{profile.name}</span>
-            <span className="rounded bg-emerald-950 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-800">
-              Verified
+            <span className="text-[#6B7280]">Listing as:</span>
+            <span className="font-semibold text-[#171717]">{profile.name}</span>
+            <span className="rounded-full bg-[#DCFCE7] px-2 py-0.5 text-[10px] font-bold text-[#16A34A] border border-green-200">
+              Verified Student
             </span>
           </div>
-          <span className="text-slate-400 font-mono text-[11px]">{profile.rollNo}</span>
+          <span className="text-[#6B7280] font-mono text-[11px]">{profile.rollNo}</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs sm:text-sm">
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Item Title *
-            </label>
+            <label className="block text-xs font-semibold text-[#171717] mb-1">Item Title *</label>
             <input
               id="listing-title-input"
               type="text"
@@ -387,16 +367,14 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
               placeholder="e.g. Core Data Structures in C++ or Hero Sprint 21-Speed Cycle"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
             />
           </div>
 
           {/* Price and Condition */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Price (₹ INR) *
-              </label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Price (₹ INR) *</label>
               <input
                 id="listing-price-input"
                 type="number"
@@ -405,19 +383,17 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
                 placeholder="e.g. 350"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Condition *
-              </label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Condition *</label>
               <select
                 id="listing-condition-select"
                 value={condition}
                 onChange={(e) => setCondition(e.target.value as ItemCondition)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
               >
                 <option value="Brand New">Brand New</option>
                 <option value="Like New">Like New</option>
@@ -429,361 +405,172 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
 
           {/* Category */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Campus Category *
-            </label>
+            <label className="block text-xs font-semibold text-[#171717] mb-1">Campus Category *</label>
             <select
               id="listing-category-select"
               value={category}
               onChange={(e) => setCategory(e.target.value as MarketplaceCategory)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none transition-colors"
+              className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
             >
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
 
-          {/* College Campus & City */}
+          {/* Campus and Pickup Location */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                College / University Campus *
-              </label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">College Campus *</label>
               <input
                 id="listing-college-input"
                 type="text"
                 required
-                placeholder="e.g. BBDITM, IET Lucknow, DU, AKTU..."
+                placeholder="e.g. BBDITM, IET, DU, AKTU..."
                 value={sellerCollege}
                 onChange={(e) => setSellerCollege(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                City / Region
-              </label>
-              <input
-                id="listing-city-input"
-                type="text"
-                placeholder="e.g. Lucknow, Delhi, Kanpur..."
-                value={sellerCity}
-                onChange={(e) => setSellerCity(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Pickup Location & Contact */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Campus Pickup Location *
-              </label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Pickup Location *</label>
               <input
                 id="listing-location-input"
                 type="text"
                 required
-                placeholder="e.g. Hostel 2 Room 314 or Library Gate"
+                placeholder="e.g. Library Gate or Hostel 2 Room 314"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                WhatsApp / Call Phone *
-              </label>
-              <input
-                id="listing-phone-input"
-                type="tel"
-                required
-                placeholder="+91 98765 43210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none font-mono"
-              />
-            </div>
+          {/* Phone */}
+          <div>
+            <label className="block text-xs font-semibold text-[#171717] mb-1">WhatsApp / Call Phone *</label>
+            <input
+              id="listing-phone-input"
+              type="tel"
+              required
+              placeholder="+91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] font-mono focus:border-[#2563EB] focus:outline-none"
+            />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Description & Details
-            </label>
+            <label className="block text-xs font-semibold text-[#171717] mb-1">Description & Details</label>
             <textarea
               id="listing-description-input"
               rows={2}
-              placeholder="State reason for selling (semester over, leaving hostel), included notes or bills, and working condition..."
+              placeholder="State working condition, reason for selling (semester over), included bills or notes..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs text-[#171717] focus:border-[#2563EB] focus:outline-none"
             />
           </div>
 
-          {/* Real Product Image Upload (Camera & Gallery) */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-slate-200">
-                Product Image (Camera or Gallery) *
-              </label>
-              <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Real product photos sell 3x faster
-              </span>
-            </div>
+          {/* Hidden Inputs for Native File Dialogs */}
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleFilePicked(e, 'gallery')}
+          />
+          <input
+            ref={nativeCameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => handleFilePicked(e, 'camera')}
+          />
 
-            {/* Hidden Inputs for Native File Dialogs */}
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleFilePicked(e, 'gallery')}
-            />
-            <input
-              ref={nativeCameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => handleFilePicked(e, 'camera')}
-            />
-
-            {/* Live Camera Viewfinder Modal/Box */}
-            {isCameraActive && (
-              <div className="rounded-2xl border border-cyan-700/80 bg-slate-950 p-3 space-y-3 shadow-inner">
-                <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold px-1">
-                  <span className="flex items-center gap-1.5">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </span>
-                    Live Camera Active ({cameraFacing === 'environment' ? 'Back' : 'Front'})
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={toggleCameraFacing}
-                      className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-2 py-1 text-[11px] text-slate-200 transition-colors"
-                      title="Flip camera"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      Flip
-                    </button>
-                    <button
-                      type="button"
-                      onClick={stopCamera}
-                      className="rounded-lg p-1 text-slate-400 hover:text-white"
-                      title="Close camera"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {cameraError ? (
-                  <div className="rounded-xl border border-rose-800/60 bg-rose-950/40 p-3 text-xs text-rose-300 space-y-2">
-                    <p>{cameraError}</p>
-                    <button
-                      type="button"
-                      onClick={() => nativeCameraInputRef.current?.click()}
-                      className="rounded-lg bg-rose-900/60 hover:bg-rose-900 px-3 py-1.5 text-xs text-white font-medium flex items-center gap-1.5"
-                    >
-                      <Smartphone className="h-3.5 w-3.5" />
-                      Open Phone Camera App
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative aspect-video sm:aspect-[4/3] w-full overflow-hidden rounded-xl bg-black border border-slate-800">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="h-full w-full object-cover"
-                    />
-                    {isCameraStarting && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-xs text-slate-300">
-                        Opening Camera...
-                      </div>
-                    )}
-                    <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-3">
-                      <button
-                        type="button"
-                        onClick={captureLivePhoto}
-                        disabled={isCameraStarting}
-                        className="flex items-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 text-xs shadow-xl shadow-black/60 transition-transform active:scale-95"
-                      >
-                        <Camera className="h-4 w-4" />
-                        <span>Take Photo</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Primary Action Buttons: Camera & Gallery */}
-            {!isCameraActive && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Camera Trigger */}
-                <div className="flex gap-1.5">
+          {/* Camera Viewfinder */}
+          {isCameraActive && (
+            <div className="rounded-2xl border border-[#2563EB] bg-black p-3 space-y-3">
+              <div className="flex items-center justify-between text-xs text-white px-1">
+                <span>Live Camera</span>
+                <div className="flex gap-2">
                   <button
-                    id="open-camera-btn"
                     type="button"
-                    onClick={() => startCamera('environment')}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-cyan-800/80 bg-cyan-950/40 hover:bg-cyan-900/50 p-2.5 text-xs font-semibold text-cyan-200 transition-all active:scale-95"
+                    onClick={toggleCameraFacing}
+                    className="p-1 rounded bg-gray-800 text-white"
                   >
-                    <Camera className="h-4 w-4 text-cyan-400" />
-                    <span>Take Photo (Camera)</span>
+                    <RefreshCw className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => nativeCameraInputRef.current?.click()}
-                    title="Open native mobile phone camera"
-                    className="flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 hover:bg-slate-800 p-2.5 text-xs text-slate-300 transition-colors"
+                    onClick={stopCamera}
+                    className="p-1 rounded bg-gray-800 text-white"
                   >
-                    <Smartphone className="h-4 w-4 text-emerald-400" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
-
-                {/* Gallery Trigger */}
-                <button
-                  id="open-gallery-btn"
-                  type="button"
-                  onClick={() => galleryInputRef.current?.click()}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-emerald-800/80 bg-emerald-950/40 hover:bg-emerald-900/50 p-2.5 text-xs font-semibold text-emerald-200 transition-all active:scale-95"
-                >
-                  <ImageIcon className="h-4 w-4 text-emerald-400" />
-                  <span>Choose from Gallery / Files</span>
-                </button>
               </div>
-            )}
-
-            {/* Drag & Drop Zone */}
-            {!isCameraActive && (
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => galleryInputRef.current?.click()}
-                className={`cursor-pointer rounded-xl border-2 border-dashed p-3 text-center transition-all ${
-                  isDragging
-                    ? 'border-emerald-400 bg-emerald-950/40 text-emerald-200'
-                    : 'border-slate-800 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-900/60 text-slate-400'
-                }`}
+              <video ref={videoRef} autoPlay playsInline muted className="w-full aspect-video rounded-xl object-cover bg-black" />
+              <button
+                type="button"
+                onClick={captureLivePhoto}
+                className="w-full py-2 rounded-xl bg-[#16A34A] text-white text-xs font-bold"
               >
-                <div className="flex items-center justify-center gap-2 text-xs">
-                  <Upload className="h-4 w-4 text-slate-400" />
-                  <span>Drop image here or click to browse from device (JPG, PNG, WebP)</span>
-                </div>
-              </div>
-            )}
-
-            {/* Image Preview Card */}
-            {imageUrl && (
-              <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/90 p-2.5 shadow-md">
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-950">
-                  <img
-                    src={imageUrl}
-                    alt="Product preview"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0 text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-white truncate">Product Photo Attached</span>
-                    {imageSource === 'camera' && (
-                      <span className="rounded bg-cyan-950 px-1.5 py-0.2 text-[10px] font-bold text-cyan-300 border border-cyan-800 shrink-0">
-                        📸 Camera Real
-                      </span>
-                    )}
-                    {imageSource === 'gallery' && (
-                      <span className="rounded bg-emerald-950 px-1.5 py-0.2 text-[10px] font-bold text-emerald-300 border border-emerald-800 shrink-0">
-                        🖼️ Gallery Real
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                    Ready to publish. Students will see this real photo on the marketplace.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => galleryInputRef.current?.click()}
-                    className="rounded-lg p-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                    title="Change Photo"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImageUrl('');
-                      setImageSource(null);
-                    }}
-                    className="rounded-lg p-1.5 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors"
-                    title="Remove Photo"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Optional URL or Quick Presets Fallback */}
-            <div className="space-y-1 pt-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Or use sample preset if photo not handy:</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const sample = SAMPLE_IMAGES.find((s) => s.category === category) || SAMPLE_IMAGES[0];
-                    setImageUrl(sample.url);
-                    setImageSource('sample');
-                  }}
-                  className="text-cyan-400 hover:underline"
-                >
-                  Use {category} sample
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] scrollbar-none">
-                {SAMPLE_IMAGES.map((sample, idx) => (
-                  <button
-                    type="button"
-                    key={idx}
-                    onClick={() => {
-                      setImageUrl(sample.url);
-                      setCategory(sample.category);
-                      setImageSource('sample');
-                    }}
-                    className={`shrink-0 rounded-lg border px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                      imageUrl === sample.url
-                        ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300'
-                        : 'border-slate-800 bg-slate-900/50 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {sample.label}
-                  </button>
-                ))}
-              </div>
+                Capture Photo
+              </button>
             </div>
-          </div>
+          )}
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          {/* Action Buttons for Image */}
+          {!isCameraActive && (
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => startCamera('environment')}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5] hover:bg-white text-[#171717] text-xs font-semibold"
+              >
+                <Camera className="h-4 w-4 text-[#2563EB]" />
+                <span>Take Photo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5] hover:bg-white text-[#171717] text-xs font-semibold"
+              >
+                <ImageIcon className="h-4 w-4 text-[#16A34A]" />
+                <span>Upload Gallery</span>
+              </button>
+            </div>
+          )}
+
+          {/* Image Preview Card */}
+          {imageUrl && (
+            <div className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#F7F7F5] p-2.5">
+              <img src={imageUrl} alt="Preview" className="h-12 w-12 rounded-lg object-cover" />
+              <div className="min-w-0 flex-1 text-xs">
+                <p className="font-semibold text-[#171717] truncate">Product Photo Attached</p>
+                <p className="text-[11px] text-[#6B7280]">Visible to buyers on campus</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImageUrl('')}
+                className="p-1.5 text-[#DC2626] hover:bg-red-50 rounded-lg"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Submit buttons */}
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-[#6B7280]"
             >
               Cancel
             </button>
@@ -791,10 +578,9 @@ export const NewListingModal: React.FC<NewListingModalProps> = ({
               id="submit-listing-btn"
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-xs"
             >
-              <PlusCircle className="h-4 w-4" />
-              <span>{isSubmitting ? 'Publishing...' : 'Publish Listing'}</span>
+              {isSubmitting ? 'Publishing...' : 'Publish Listing'}
             </button>
           </div>
         </form>

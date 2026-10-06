@@ -70,11 +70,9 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
     const sizeInMb = (file.size / (1024 * 1024)).toFixed(1);
     setFileSizeText(`${sizeInMb} MB`);
 
-    // Create a local blob URL for preview and download
     const blobUrl = URL.createObjectURL(file);
     setPdfBlobUrl(blobUrl);
 
-    // Estimate pages based on size
     const est = Math.max(12, Math.min(250, Math.round(file.size / (80 * 1024))));
     setEstimatedPages(est);
 
@@ -126,314 +124,249 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
       .filter((u) => u.length > 0);
 
     const newResource: StudyResource = {
-      id: `user-upload-${Date.now()}`,
+      id: `res-${Date.now()}`,
       title: title.trim(),
       subject: activeSubject,
-      semester: Number(semester),
+      semester,
       course,
       category,
-      author: author.trim() || profile.name || 'Campus Student',
+      author: author.trim() || profile.name || 'Verified Student',
       description:
         description.trim() ||
-        `Verified curriculum material uploaded by ${profile.name || 'student'}. Covers key semester topics, exam questions, and formulas.`,
+        `Verified curriculum study notes covering comprehensive syllabus topics, numerical proofs, and exam preparation guides.`,
       pages: estimatedPages,
       fileSize: fileSizeText,
       downloads: 1,
-      saved: true,
-      unitsSummary:
-        units.length > 0
-          ? units
-          : [
-              'Unit 1: Fundamentals, core definitions & basic properties',
-              'Unit 2: System design & standard algorithmic steps',
-              'Unit 3: Intermediate formulas & state transitions',
-              'Unit 4: University exam questions & recurrent problem sets',
-              'Unit 5: Fast revision summary & cheat sheet',
-            ],
-      sampleContent: description || 'Complete student-uploaded study notes with solved university questions.',
+      saved: false,
+      unitsSummary: units.length > 0 ? units : [`Unit 1: ${activeSubject} Fundamentals`, 'Unit 2: Core Concepts & Formulas', 'Unit 3: Exam Numericals'],
       pdfBlobUrl: pdfBlobUrl || undefined,
-      uploadedBy: profile.name || 'Student Contributor',
+      uploadedBy: profile.name,
+      rating: 5.0,
+      ratingsCount: 1,
+      comments: [
+        {
+          id: `comm-init-${Date.now()}`,
+          resourceId: `res-${Date.now()}`,
+          authorName: profile.name || 'Uploader',
+          authorRoll: profile.rollNo || 'Verified',
+          authorBranch: profile.course,
+          rating: 5,
+          comment: 'Uploaded genuine semester study notes.',
+          tag: 'Topper Notes',
+          createdAt: 'Just now',
+          helpfulCount: 0,
+        },
+      ],
     };
 
-    // Save to local & call parent handler
-    onAddResource(newResource);
-    setIsSubmitting(false);
-    onClose();
+    try {
+      onAddResource(newResource);
+      setIsSubmitting(false);
+      onClose();
+    } catch {
+      setIsSubmitting(false);
+      setErrorMsg('Error saving resource.');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-800 bg-[#0f172a] shadow-2xl overflow-hidden">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4 bg-slate-950">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white border border-[#E5E7EB] shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 sm:px-6 py-4 bg-white shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center shrink-0">
               <UploadCloud className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span>Upload Book PDF or Topper Notes</span>
-                <span className="rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold px-2 py-0.5">
-                  Share with Campus
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                Share textbooks, handwritten notes, or formula sheets. Visible instantly to all students!
+              <h3 className="text-base sm:text-lg font-bold text-[#171717]">
+                Share Study Material or Book PDF
+              </h3>
+              <p className="text-xs text-[#6B7280]">
+                Uploaded materials appear in the Study Hub for campus students
               </p>
             </div>
           </div>
           <button
-            id="close-upload-modal-btn"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#171717]"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs sm:text-sm">
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs sm:text-sm">
           {errorMsg && (
-            <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-3 text-rose-300 flex items-center gap-2">
+            <div className="rounded-xl border border-red-200 bg-[#FEE2E2] p-3 text-xs text-[#DC2626] flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* File Drag & Drop Zone */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Select Book PDF / Document
-            </label>
-            <div
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-all ${
-                dragActive
-                  ? 'border-emerald-400 bg-emerald-950/20'
-                  : selectedFile
-                  ? 'border-emerald-500/60 bg-emerald-950/10'
-                  : 'border-slate-700 bg-slate-900/60 hover:border-slate-600 hover:bg-slate-900'
-              }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.epub"
-                onChange={handleFileChange}
-                className="hidden"
-              />
+          {/* File Dropzone */}
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all ${
+              dragActive
+                ? 'border-[#2563EB] bg-[#EFF6FF]'
+                : 'border-[#E5E7EB] bg-[#F7F7F5]/50 hover:bg-[#F7F7F5] hover:border-gray-300'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx"
+              className="hidden"
+              onChange={handleFileChange}
+            />
 
-              {selectedFile ? (
-                <div className="flex items-center justify-center gap-3 text-left">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-white text-xs sm:text-sm line-clamp-1">{selectedFile.name}</p>
-                    <p className="text-[11px] text-emerald-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      <span>{fileSizeText} • Ready to publish</span>
-                    </p>
-                  </div>
+            {selectedFile ? (
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
+                  <CheckCircle2 className="h-6 w-6" />
                 </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <UploadCloud className="mx-auto h-8 w-8 text-slate-400" />
-                  <p className="text-xs font-semibold text-slate-200">
-                    Click to browse or drag & drop PDF file
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    Supports PDF, DOCX (Max 50MB) • Will be viewable & downloadable in Study Hub
+                <div className="text-left">
+                  <p className="text-xs font-bold text-[#171717]">{selectedFile.name}</p>
+                  <p className="text-[11px] text-[#6B7280]">
+                    {fileSizeText} • Approx {estimatedPages} pages • Ready to upload
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <UploadCloud className="h-8 w-8 text-[#2563EB] mx-auto" />
+                <p className="text-xs font-bold text-[#171717]">
+                  Drag and drop your PDF book / notes here, or <span className="text-[#2563EB] underline">browse</span>
+                </p>
+                <p className="text-[11px] text-[#6B7280]">
+                  Supports PDF, Word and lecture notes (Up to 50MB)
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Title of Material *
+            <label className="block text-xs font-semibold text-[#171717] mb-1">
+              Resource Title *
             </label>
             <input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Complete Operating Systems Unit 1-5 Handwritten Topper Notes"
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              placeholder="e.g. Database Systems Complete Handwritten Topper Notes (Unit 1 to 5)"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
-          {/* Category & Subject */}
+          {/* Subject & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as StudyResourceCategory)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
-              >
-                <option value="Notes">Topper Notes & Handouts</option>
-                <option value="Textbooks">Textbooks</option>
-                <option value="Reference Books">Reference Books</option>
-                <option value="Authorized Digital Resources">Department Lecture Materials</option>
-                <option value="PYQs">PYQs & Solved Papers</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Subject
+              <label className="block text-xs font-semibold text-[#171717] mb-1">
+                Subject *
               </label>
               <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
               >
                 {SUBJECT_PRESETS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <option key={s} value={s}>{s}</option>
                 ))}
+              </select>
+
+              {subject === 'Other / Custom Subject' && (
+                <input
+                  type="text"
+                  required
+                  value={customSubject}
+                  onChange={(e) => setCustomSubject(e.target.value)}
+                  placeholder="Enter specific subject name..."
+                  className="mt-1.5 w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
+                />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">
+                Resource Category *
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as StudyResourceCategory)}
+                className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
+              >
+                <option value="Notes">Handwritten Notes / Topper Notes</option>
+                <option value="Textbooks">Textbooks</option>
+                <option value="Reference Books">Reference Books</option>
+                <option value="Authorized Digital Resources">Digital Notes / Formula Sheet</option>
+                <option value="PYQs">Previous Year Question Solutions</option>
               </select>
             </div>
           </div>
 
-          {/* If custom subject */}
-          {subject === 'Other / Custom Subject' && (
+          {/* Course & Semester */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Enter Custom Subject Name *
-              </label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Course</label>
               <input
                 type="text"
-                required
-                value={customSubject}
-                onChange={(e) => setCustomSubject(e.target.value)}
-                placeholder="e.g. Microprocessors 8085 / 8086"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                placeholder="e.g. B.Tech CSE / IT"
+                className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
-          )}
 
-          {/* Semester & Course & Estimated Pages */}
-          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Semester</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Semester</label>
               <select
                 value={semester}
                 onChange={(e) => setSemester(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                  <option key={s} value={s}>
-                    Semester {s}
-                  </option>
+                  <option key={s} value={s}>Semester {s}</option>
                 ))}
               </select>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Course</label>
-              <select
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
-              >
-                <option value="B.Tech CSE/IT">B.Tech CSE/IT</option>
-                <option value="BCA">BCA</option>
-                <option value="MCA">MCA</option>
-                <option value="B.Tech ECE">B.Tech ECE</option>
-                <option value="All Engineering">All Engineering</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Pages Count</label>
-              <input
-                type="number"
-                min={1}
-                max={2000}
-                value={estimatedPages}
-                onChange={(e) => setEstimatedPages(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Author */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Author / Contributor Name
-            </label>
-            <input
-              type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              placeholder="e.g. Aman Singh (Batch Topper 9.4 CGPA)"
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-            />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Description & What is Included
-            </label>
+            <label className="block text-xs font-semibold text-[#171717] mb-1">Description</label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Neat handwritten notes with university question breakdowns, AVL tree rotation dry-runs, and formula sheet."
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-            />
-          </div>
-
-          {/* Unit Summaries */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Key Unit Coverage (Optional, 1 per line)
-            </label>
-            <textarea
-              rows={2}
-              value={unitsSummaryInput}
-              onChange={(e) => setUnitsSummaryInput(e.target.value)}
-              placeholder={"Unit 1: Introduction & State Invariants\nUnit 2: Standard Algorithm Steps\nUnit 3: Recurrent Exam Questions"}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white placeholder-slate-500 font-mono text-xs focus:border-emerald-500 focus:outline-none"
+              placeholder="Highlight key units, solved numericals, and syllabus coverage..."
+              className="w-full px-3.5 py-2 rounded-xl border border-[#E5E7EB] bg-white text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
           {/* Footer Submit */}
-          <div className="border-t border-slate-800 pt-4 flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Will be visible to all students immediately</span>
-            </span>
+          <div className="pt-3 border-t border-[#E5E7EB] flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-[#6B7280] hover:bg-[#F7F7F5]"
+            >
+              Cancel
+            </button>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-950/50 transition-all active:scale-95 disabled:opacity-50"
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>Publish to Study Hub</span>
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
+            >
+              {isSubmitting ? 'Uploading...' : 'Publish to Study Hub'}
+            </button>
           </div>
         </form>
       </div>

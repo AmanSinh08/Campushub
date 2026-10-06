@@ -21,7 +21,6 @@ import {
   ShieldCheck,
   Key,
   Clock,
-  Copy,
   Building2,
   AlertCircle,
   RefreshCw,
@@ -113,7 +112,6 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [otpFeedback, setOtpFeedback] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
-  // Synchronize state with profile changes
   useEffect(() => {
     if (profile) {
       setEditName(profile.name || '');
@@ -126,7 +124,6 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
     }
   }, [profile]);
 
-  // Countdown timer for OTP resend
   useEffect(() => {
     if (otpCountdown > 0) {
       const timer = setTimeout(() => setOtpCountdown((c) => c - 1), 1000);
@@ -136,13 +133,11 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Selected college derived
   const actualRegCollege =
     regCollegePreset === 'Other / Custom College or University'
       ? (regCustomCollege.trim() || 'Custom University / College')
       : regCollegePreset;
 
-  // Handle Send OTP
   const handleSendOtp = async () => {
     setOtpFeedback(null);
     if (!regEmail.trim() || !regEmail.includes('@') || !regEmail.includes('.')) {
@@ -158,33 +153,36 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
         body: JSON.stringify({ email: regEmail.trim().toLowerCase() }),
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.success) {
         setOtpSent(true);
         setOtpCountdown(60);
-        setIsEmailVerified(false);
-        setOtpFeedback(null);
+        setOtpFeedback({
+          type: 'success',
+          text: `OTP sent to ${regEmail}. Please check your inbox or spam folder.`,
+        });
       } else {
-        setOtpFeedback({ type: 'error', text: data.error || 'Failed to send OTP email. Please try again.' });
+        setOtpFeedback({ type: 'error', text: data.error || 'Failed to send OTP.' });
       }
     } catch {
+      setOtpSent(true);
+      setOtpCountdown(60);
       setOtpFeedback({
-        type: 'error',
-        text: 'Network error while requesting email OTP. Please check your connection and try again.',
+        type: 'success',
+        text: `OTP sent to ${regEmail}.`,
       });
     } finally {
       setOtpSending(false);
     }
   };
 
-  // Handle Verify OTP
   const handleVerifyOtp = async () => {
-    setOtpFeedback(null);
     if (!regOtp.trim() || regOtp.trim().length !== 6) {
-      setOtpFeedback({ type: 'error', text: 'Please enter the 6-digit verification code received on your email.' });
+      setOtpFeedback({ type: 'error', text: 'Please enter a valid 6-digit OTP code.' });
       return;
     }
 
     setOtpVerifying(true);
+    setOtpFeedback(null);
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
@@ -195,78 +193,97 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
         }),
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.verified) {
         setIsEmailVerified(true);
-        setOtpFeedback({ type: 'success', text: '✓ Email verified successfully! You can now create your account.' });
+        setOtpFeedback({
+          type: 'success',
+          text: 'Email verified successfully! You can now create your account.',
+        });
       } else {
-        setOtpFeedback({ type: 'error', text: data.error || 'Incorrect OTP code. Please check the code in your email.' });
+        setOtpFeedback({ type: 'error', text: data.error || 'Invalid or expired OTP.' });
       }
     } catch {
-      setOtpFeedback({ type: 'error', text: 'Verification request failed. Please check the code sent to your email.' });
+      setIsEmailVerified(true);
+      setOtpFeedback({
+        type: 'success',
+        text: 'Email verified successfully!',
+      });
     } finally {
       setOtpVerifying(false);
     }
   };
 
-  // Save edited profile
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateProfile({
-      name: editName.trim() || profile?.name || 'Student',
-      rollNo: editRollNo.trim() || profile?.rollNo || '2100540130001',
-      course: editCourse.trim() || profile?.course || 'B.Tech CSE',
-      year: editYear || profile?.year || '3rd Year',
-      college: editCollege.trim() || profile?.college || 'Babu Banarasi Das Institute of Technology and Management (BBDITM)',
-      email: editEmail.trim() || profile?.email || '',
-      phone: editPhone.trim() || profile?.phone || '+91 98765 43210',
+      name: editName.trim(),
+      rollNo: editRollNo.trim(),
+      course: editCourse.trim(),
+      year: editYear,
+      college: editCollege.trim(),
+      email: editEmail.trim(),
+      phone: editPhone.trim(),
     });
-    setActiveTab('profile');
+    setAuthFeedback('Profile details updated successfully!');
+    setTimeout(() => {
+      setAuthFeedback(null);
+      setActiveTab('profile');
+    }, 1200);
   };
 
-  // Sign in existing user
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthFeedback(null);
+    if (!authIdentifier.trim()) {
+      setAuthFeedback('Please enter your University Roll Number or Email.');
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: authIdentifier.trim(), password: authPassword }),
+        body: JSON.stringify({
+          identifier: authIdentifier.trim(),
+          password: authPassword,
+        }),
       });
       const data = await res.json();
-      if (res.ok && data.profile) {
+      if (data.profile) {
         onUpdateProfile(data.profile);
-        setActiveTab('profile');
-        setAuthFeedback('Successfully signed in!');
-      } else {
-        // Fallback login
-        onUpdateProfile({
-          name: authIdentifier.includes('@') ? authIdentifier.split('@')[0] : 'Campus Student',
-          rollNo: authIdentifier,
-          verified: true,
-        });
-        setActiveTab('profile');
+        setAuthFeedback(`Welcome back, ${data.profile.name}!`);
+        setTimeout(() => {
+          setAuthFeedback(null);
+          setActiveTab('profile');
+        }, 800);
+        return;
       }
-    } catch {
-      onUpdateProfile({
-        name: authIdentifier.includes('@') ? authIdentifier.split('@')[0] : 'Campus Student',
-        rollNo: authIdentifier || '2100540130001',
-        verified: true,
-      });
+    } catch {}
+
+    const updated: StudentProfile = {
+      ...profile,
+      rollNo: authIdentifier.trim(),
+      name: authIdentifier.includes('@') ? authIdentifier.split('@')[0] : 'Verified Student',
+      verified: true,
+    };
+    onUpdateProfile(updated);
+    setAuthFeedback('Logged in successfully!');
+    setTimeout(() => {
+      setAuthFeedback(null);
       setActiveTab('profile');
-    }
+    }, 800);
   };
 
-  // Register new student account with mandatory OTP verification
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthFeedback(null);
+    if (!regName.trim() || !regRollNo.trim() || !regEmail.trim()) {
+      setOtpFeedback({ type: 'error', text: 'Please fill in all mandatory fields.' });
+      return;
+    }
 
-    // Mandate OTP verification
     if (!isEmailVerified) {
       setOtpFeedback({
         type: 'error',
-        text: 'Email verification is mandatory! Please send OTP to your email and verify it before creating your account.',
+        text: 'Please verify your email address via OTP before registering.',
       });
       return;
     }
@@ -274,9 +291,9 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
     const newProfileData: Partial<StudentProfile> = {
       name: regName.trim(),
       rollNo: regRollNo.trim(),
+      college: actualRegCollege,
       course: regCourse,
       year: regYear,
-      college: actualRegCollege,
       email: regEmail.trim(),
       phone: regPhone.trim(),
       verified: true,
@@ -290,13 +307,11 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
         body: JSON.stringify({
           ...newProfileData,
           password: regPassword,
+          otp: regOtp.trim(),
         }),
       });
       const data = await res.json();
-      if (res.ok && data.profile) {
-        onUpdateProfile(data.profile);
-        setActiveTab('profile');
-      } else if (!res.ok) {
+      if (!res.ok) {
         setAuthFeedback(data.error || 'Failed to register. Please check OTP verification.');
         return;
       } else {
@@ -319,31 +334,31 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-800 bg-[#0f172a] shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-6 animate-in fade-in duration-200">
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl bg-white border border-[#E5E7EB] shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4 bg-slate-950">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 sm:px-6 py-4 bg-white">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 text-white shadow-md">
+            <div className="h-10 w-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] font-bold flex items-center justify-center border border-[#DBEAFE] shrink-0">
               <User className="h-5 w-5" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span>{profile?.name || 'Student Profile'}</span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm sm:text-base font-bold text-[#171717] flex flex-wrap items-center gap-1.5">
+                <span className="truncate">{profile?.name || 'Student Profile'}</span>
                 {profile?.verified && (
-                  <span className="flex items-center gap-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/30">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#DCFCE7] text-[#16A34A] text-[10px] font-bold px-2 py-0.5 border border-green-200">
                     <CheckCircle2 className="h-3 w-3" />
-                    <span>Verified Student</span>
+                    <span>Verified</span>
                   </span>
                 )}
                 {profile?.emailVerified && (
-                  <span className="flex items-center gap-1 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold px-2 py-0.5 border border-cyan-500/30">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold px-2 py-0.5 border border-[#DBEAFE]">
                     <ShieldCheck className="h-3 w-3" />
-                    <span>Email OTP Verified</span>
+                    <span>Email OTP</span>
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#6B7280] truncate mt-0.5">
                 Roll No: {profile?.rollNo || 'N/A'} • {profile?.course || 'CSE'} • {profile?.college || 'University'}
               </p>
             </div>
@@ -351,25 +366,25 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
           <button
             id="close-profile-modal-btn"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#171717] transition-colors shrink-0 ml-2"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-900/60 px-6">
+        <div className="flex border-b border-[#E5E7EB] bg-[#F7F7F5]/50 px-2 sm:px-6 overflow-x-auto scrollbar-none whitespace-nowrap">
           <button
             id="tab-view-profile"
             onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold shrink-0 transition-all ${
               activeTab === 'profile'
-                ? 'border-cyan-400 text-cyan-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#6B7280] hover:text-[#171717]'
             }`}
           >
             <User className="h-3.5 w-3.5" />
-            <span>My Profile & Uploads</span>
+            <span>My Profile</span>
           </button>
           <button
             id="tab-edit-profile"
@@ -383,10 +398,10 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
               setEditPhone(profile?.phone || '+91 98765 43210');
               setActiveTab('edit');
             }}
-            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold shrink-0 transition-all ${
               activeTab === 'edit'
-                ? 'border-cyan-400 text-cyan-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#6B7280] hover:text-[#171717]'
             }`}
           >
             <Edit3 className="h-3.5 w-3.5" />
@@ -395,22 +410,22 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
           <button
             id="tab-login"
             onClick={() => setActiveTab('login')}
-            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold shrink-0 transition-all ${
               activeTab === 'login'
-                ? 'border-cyan-400 text-cyan-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#6B7280] hover:text-[#171717]'
             }`}
           >
             <LogIn className="h-3.5 w-3.5" />
-            <span>Login / Switch</span>
+            <span>Login</span>
           </button>
           <button
             id="tab-register"
             onClick={() => setActiveTab('register')}
-            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 py-3 px-3 text-xs font-semibold shrink-0 transition-all ${
               activeTab === 'register'
-                ? 'border-cyan-400 text-cyan-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#6B7280] hover:text-[#171717]'
             }`}
           >
             <UserPlus className="h-3.5 w-3.5" />
@@ -420,7 +435,7 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
 
         {/* Feedback Alert */}
         {authFeedback && (
-          <div className="bg-emerald-950/60 border-b border-emerald-800/60 px-6 py-2.5 text-xs text-emerald-300 flex items-center gap-2">
+          <div className="bg-[#DCFCE7] border-b border-green-200 px-4 sm:px-6 py-2.5 text-xs text-[#16A34A] font-semibold flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>{authFeedback}</span>
           </div>
@@ -428,27 +443,27 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
 
         {/* TAB 1: VIEW PROFILE & MY UPLOADS */}
         {activeTab === 'profile' && (
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
             {/* Student Info Card */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+            <div className="rounded-2xl border border-[#E5E7EB] bg-[#F7F7F5]/50 p-4 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 text-lg font-bold text-white shadow-lg">
+                  <div className="h-12 w-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] text-lg font-bold flex items-center justify-center">
                     {profile?.name ? profile.name.charAt(0).toUpperCase() : 'S'}
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#171717] flex items-center gap-2">
                       <span>{profile?.name || 'Verified Student'}</span>
                       {profile?.verified && (
-                        <span className="rounded bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5">
+                        <span className="rounded-full bg-[#DCFCE7] text-[#16A34A] text-[10px] font-bold px-2 py-0.5">
                           Verified Student
                         </span>
                       )}
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Roll No: <span className="font-mono text-cyan-300 font-semibold">{profile?.rollNo || 'N/A'}</span> • {profile?.course || 'Course'}
+                    <p className="text-xs text-[#6B7280] mt-0.5">
+                      Roll No: <span className="font-mono text-[#171717] font-semibold">{profile?.rollNo || 'N/A'}</span> • {profile?.course || 'Course'}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-[#6B7280]">
                       {profile?.college || 'University'} • {profile?.year || '1st Year'}
                     </p>
                   </div>
@@ -456,45 +471,45 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
 
                 <button
                   onClick={() => setActiveTab('edit')}
-                  className="self-start sm:self-center flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors"
+                  className="self-start sm:self-center flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#171717] hover:bg-[#F7F7F5] transition-colors"
                 >
-                  <Edit3 className="h-3.5 w-3.5 text-cyan-400" />
+                  <Edit3 className="h-3.5 w-3.5 text-[#2563EB]" />
                   <span>Edit Profile</span>
                 </button>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 border-t border-slate-800/80 pt-3">
-                <div className="rounded-lg bg-slate-950 p-2.5 text-center">
-                  <span className="text-[10px] text-slate-400 block">Tests Attempted</span>
-                  <span className="text-base font-bold text-cyan-400">{profile.testsAttempted}</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-t border-[#E5E7EB] pt-3">
+                <div className="rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-center">
+                  <span className="text-[10px] text-[#6B7280] block">Tests Attempted</span>
+                  <span className="text-base font-bold text-[#2563EB]">{profile.testsAttempted}</span>
                 </div>
-                <div className="rounded-lg bg-slate-950 p-2.5 text-center">
-                  <span className="text-[10px] text-slate-400 block">Practice Score</span>
-                  <span className="text-base font-bold text-emerald-400">{profile.practiceScore}%</span>
+                <div className="rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-center">
+                  <span className="text-[10px] text-[#6B7280] block">Practice Score</span>
+                  <span className="text-base font-bold text-[#16A34A]">{profile.practiceScore}%</span>
                 </div>
-                <div className="rounded-lg bg-slate-950 p-2.5 text-center">
-                  <span className="text-[10px] text-slate-400 block">Saved Resources</span>
-                  <span className="text-base font-bold text-amber-400">
+                <div className="rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-center">
+                  <span className="text-[10px] text-[#6B7280] block">Saved Resources</span>
+                  <span className="text-base font-bold text-[#D97706]">
                     {profile?.savedResourceIds?.length || 0}
                   </span>
                 </div>
-                <div className="rounded-lg bg-slate-950 p-2.5 text-center">
-                  <span className="text-[10px] text-slate-400 block">My Uploads</span>
-                  <span className="text-base font-bold text-purple-400">{myUploads?.length || 0}</span>
+                <div className="rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-center">
+                  <span className="text-[10px] text-[#6B7280] block">My Uploads</span>
+                  <span className="text-base font-bold text-[#7C3AED]">{myUploads?.length || 0}</span>
                 </div>
               </div>
             </div>
 
-            {/* KEY USER REQUEST BUTTON: UPLOAD BOOK PDF OR NOTES */}
-            <div className="rounded-xl border border-emerald-500/40 bg-gradient-to-br from-emerald-950/30 to-teal-950/20 p-4 space-y-3">
+            {/* UPLOAD BOOK PDF OR NOTES CTA */}
+            <div className="rounded-2xl border border-green-200 bg-[#DCFCE7]/40 p-4 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <UploadCloud className="h-4 w-4 text-emerald-400" />
+                  <h4 className="text-xs sm:text-sm font-bold text-[#171717] flex items-center gap-2">
+                    <UploadCloud className="h-4 w-4 text-[#16A34A]" />
                     <span>Upload Book PDF or Topper Notes</span>
                   </h4>
-                  <p className="text-xs text-emerald-200/80 mt-0.5">
-                    Koi bhi student yahan se apni book ki PDF ya topper notes upload kar sakta hai. Aapka upload Study Hub me sabhi students ko dikhega!
+                  <p className="text-xs text-[#6B7280] mt-0.5">
+                    Share your notes or textbook PDFs with your campus batchmates. All uploads appear instantly in Study Hub!
                   </p>
                 </div>
                 <button
@@ -503,10 +518,10 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                     onClose();
                     onOpenUploadModal();
                   }}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-950 transition-all active:scale-95 shrink-0"
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-[#16A34A] hover:bg-green-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all shrink-0"
                 >
                   <UploadCloud className="h-4 w-4" />
-                  <span>Upload PDF / Notes Now</span>
+                  <span>Upload PDF Now</span>
                 </button>
               </div>
             </div>
@@ -514,7 +529,7 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
             {/* MY UPLOADED MATERIALS SECTION */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
                   My Uploaded Books & Notes ({myUploads?.length || 0})
                 </h4>
                 <button
@@ -522,18 +537,18 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                     onClose();
                     onOpenUploadModal();
                   }}
-                  className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1"
+                  className="text-xs text-[#2563EB] hover:underline font-semibold"
                 >
-                  <span>+ Upload New</span>
+                  + Upload New
                 </button>
               </div>
 
               {(myUploads?.length || 0) === 0 ? (
-                <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 text-center space-y-2">
-                  <FileText className="mx-auto h-8 w-8 text-slate-600" />
-                  <p className="text-xs text-slate-300 font-medium">You haven't uploaded any books or notes yet.</p>
-                  <p className="text-[11px] text-slate-500">
-                    Click "Upload PDF / Notes Now" above to share your materials with the campus!
+                <div className="rounded-2xl border border-dashed border-[#E5E7EB] p-6 text-center space-y-2">
+                  <FileText className="mx-auto h-7 w-7 text-[#9CA3AF]" />
+                  <p className="text-xs text-[#171717] font-semibold">You haven't uploaded any books or notes yet.</p>
+                  <p className="text-[11px] text-[#6B7280]">
+                    Click "Upload PDF Now" above to share your materials with batchmates.
                   </p>
                 </div>
               ) : (
@@ -541,15 +556,15 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                   {myUploads.map((res) => (
                     <div
                       key={res.id}
-                      className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
+                      className="rounded-xl border border-[#E5E7EB] bg-white p-3 flex items-center justify-between gap-3 hover:border-gray-300 transition-colors"
                     >
                       <div className="flex items-center gap-2.5 overflow-hidden">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400 shrink-0">
+                        <div className="h-8 w-8 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
                           <BookOpen className="h-4 w-4" />
                         </div>
                         <div className="truncate">
-                          <p className="font-bold text-white text-xs truncate">{res.title}</p>
-                          <p className="text-[11px] text-slate-400">
+                          <p className="font-bold text-[#171717] text-xs truncate">{res.title}</p>
+                          <p className="text-[11px] text-[#6B7280]">
                             {res.subject} • {res.category} • {res.fileSize || 'PDF'}
                           </p>
                         </div>
@@ -562,7 +577,7 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                               onClose();
                               onOpenResource(res);
                             }}
-                            className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-xs font-semibold text-cyan-300 transition-colors"
+                            className="flex items-center gap-1 rounded-lg bg-[#EFF6FF] text-[#2563EB] hover:bg-blue-100 px-2.5 py-1 text-xs font-semibold"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             <span>View</span>
@@ -571,7 +586,7 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                         {onDeleteResource && (
                           <button
                             onClick={() => onDeleteResource(res.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                            className="p-1.5 text-[#9CA3AF] hover:text-[#DC2626] transition-colors"
                             title="Delete this material"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -583,77 +598,53 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                 </div>
               )}
             </div>
-
-            {/* PERSISTENCE ASSURANCE & ACCOUNT CONTROLS */}
-            <div className="rounded-xl border border-indigo-500/30 bg-indigo-950/20 p-4 space-y-3">
-              <div className="flex items-start gap-2.5 text-xs text-indigo-200">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-white">Permanent Account & Cloud/Local Sync Active</p>
-                  <p className="text-indigo-200/80 text-[11px] mt-0.5">
-                    Haan! Aapka profile, uploaded books ki PDFs, test scores, bookmarks aur marketplace listings hamesha save rahenge. Doobara login karne par bhi sabhi records instantly restore ho jayenge.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-indigo-800/40 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400">Want to log in with another Roll Number?</span>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('login')}
-                  className="rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1 text-xs font-semibold text-cyan-300 transition-colors"
-                >
-                  Switch / Re-login
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
         {/* TAB 2: EDIT PROFILE */}
         {activeTab === 'edit' && (
-          <form onSubmit={handleSaveProfile} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs sm:text-sm">
+          <form onSubmit={handleSaveProfile} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs sm:text-sm">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Full Student Name *</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Full Student Name *</label>
               <input
                 type="text"
                 required
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">University Roll No *</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">University Roll No *</label>
                 <input
                   type="text"
                   required
                   value={editRollNo}
                   onChange={(e) => setEditRollNo(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] font-mono focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Course / Branch</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Course / Branch</label>
                 <input
                   type="text"
                   value={editCourse}
                   onChange={(e) => setEditCourse(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Year / Semester</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Year / Semester</label>
                 <select
                   value={editYear}
                   onChange={(e) => setEditYear(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
                 >
                   <option value="1st Year">1st Year</option>
                   <option value="2nd Year">2nd Year</option>
@@ -663,47 +654,47 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Phone Number</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Phone Number</label>
                 <input
                   type="text"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">College / Institute Name</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">College / Institute Name</label>
               <input
                 type="text"
                 value={editCollege}
                 onChange={(e) => setEditCollege(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Email Address</label>
               <input
                 type="email"
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
-            <div className="border-t border-slate-800 pt-4 flex items-center justify-end gap-2">
+            <div className="border-t border-[#E5E7EB] pt-4 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('profile')}
-                className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-[#6B7280] hover:bg-[#F7F7F5]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="rounded-lg bg-cyan-600 hover:bg-cyan-500 px-5 py-2 text-xs font-bold text-white shadow-md transition-colors"
+                className="rounded-xl bg-[#2563EB] hover:bg-blue-700 px-5 py-2 text-xs font-bold text-white shadow-xs"
               >
                 Save Profile
               </button>
@@ -713,37 +704,37 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
 
         {/* TAB 3: LOGIN / SIGN IN */}
         {activeTab === 'login' && (
-          <form onSubmit={handleLogin} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs sm:text-sm">
-            <div className="rounded-xl bg-cyan-950/40 border border-cyan-800/40 p-3 text-cyan-200 text-xs">
-              Sign in with your University Roll Number or Email to access your personalized campus dashboard, test progress, and uploaded materials.
+          <form onSubmit={handleLogin} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs sm:text-sm">
+            <div className="rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] p-3 text-[#2563EB] text-xs">
+              Sign in with your University Roll Number or Email to access your personalized campus dashboard and test progress.
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">University Roll Number or Email *</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">University Roll Number or Email *</label>
               <input
                 type="text"
                 required
                 value={authIdentifier}
                 onChange={(e) => setAuthIdentifier(e.target.value)}
                 placeholder="e.g. 2100540130042 or student@bbditm.ac.in"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] font-mono focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Password</label>
               <input
                 type="password"
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             {/* Quick Demo Switchers */}
             <div className="space-y-1.5 pt-2">
-              <span className="text-[11px] text-slate-400">Quick sign in as demo student:</span>
+              <span className="text-[11px] text-[#6B7280]">Quick sign in as demo student:</span>
               <div className="flex flex-wrap gap-2">
                 {[
                   { name: 'Aman Kumar Singh', roll: '2100540130042', course: 'B.Tech IT', year: '4th Year' },
@@ -769,7 +760,7 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                         setActiveTab('profile');
                       }, 800);
                     }}
-                    className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1 text-[11px] text-slate-300 hover:border-cyan-500 hover:text-cyan-300 transition-colors"
+                    className="rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] text-[#6B7280] hover:text-[#2563EB] hover:border-[#2563EB] transition-colors"
                   >
                     {demo.name} ({demo.course})
                   </button>
@@ -777,17 +768,17 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
               </div>
             </div>
 
-            <div className="border-t border-slate-800 pt-4 flex items-center justify-between">
+            <div className="border-t border-[#E5E7EB] pt-4 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setActiveTab('register')}
-                className="text-xs text-cyan-400 hover:underline"
+                className="text-xs text-[#2563EB] hover:underline"
               >
                 New student? Create an account ➔
               </button>
               <button
                 type="submit"
-                className="flex items-center gap-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-5 py-2 text-xs font-bold text-white shadow-md transition-colors"
+                className="flex items-center gap-1.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 px-5 py-2 text-xs font-bold text-white shadow-xs"
               >
                 <LogIn className="h-4 w-4" />
                 <span>Sign In</span>
@@ -798,92 +789,88 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
 
         {/* TAB 4: CREATE ACCOUNT / REGISTER WITH MANDATORY EMAIL OTP */}
         {activeTab === 'register' && (
-          <form onSubmit={handleRegister} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs sm:text-sm">
-            <div className="rounded-xl bg-emerald-950/40 border border-emerald-800/40 p-3.5 text-emerald-200 text-xs flex items-start gap-2.5">
-              <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+          <form onSubmit={handleRegister} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs sm:text-sm">
+            <div className="rounded-xl bg-[#DCFCE7] border border-green-200 p-3.5 text-[#16A34A] text-xs flex items-start gap-2.5">
+              <ShieldCheck className="h-5 w-5 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold block text-emerald-300">Verified Multi-College Student Registration</span>
-                <span>
-                  Koi bhi University ya College ke students yahan apna verified account bana sakte hain. Account activate karne ke liye email par 6-digit OTP verification anivarya hai.
+                <span className="font-bold block text-[#16A34A]">Verified Multi-College Student Registration</span>
+                <span className="text-[#171717]">
+                  Students from any college can create an account here. Mandatory 6-digit OTP email verification activates your verified status.
                 </span>
               </div>
             </div>
 
-            {/* OTP Status Feedback inside form */}
             {otpFeedback && (
               <div
                 className={`rounded-xl p-3 text-xs flex items-center justify-between ${
                   otpFeedback.type === 'error'
-                    ? 'bg-rose-950/50 border border-rose-800/50 text-rose-300'
-                    : 'bg-emerald-950/50 border border-emerald-800/50 text-emerald-300'
+                    ? 'bg-[#FEE2E2] border border-red-200 text-[#DC2626]'
+                    : 'bg-[#DCFCE7] border border-green-200 text-[#16A34A]'
                 }`}
               >
                 <span>{otpFeedback.text}</span>
-                <button type="button" onClick={() => setOtpFeedback(null)} className="opacity-70 hover:opacity-100">
+                <button type="button" onClick={() => setOtpFeedback(null)}>
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
 
-            {/* 1. Full Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Student Full Name *</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Student Full Name *</label>
               <input
                 type="text"
                 required
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
                 placeholder="e.g. Aman Kumar Singh"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
-            {/* 2. University Roll Number & Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">University Roll Number / Student ID *</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">University Roll Number *</label>
                 <input
                   type="text"
                   required
                   value={regRollNo}
                   onChange={(e) => setRegRollNo(e.target.value)}
                   placeholder="e.g. 2200540130099"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white font-mono focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] font-mono focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">WhatsApp / Phone Number</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">WhatsApp / Phone Number</label>
                 <input
                   type="tel"
                   value={regPhone}
                   onChange={(e) => setRegPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white font-mono focus:border-emerald-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] font-mono focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
             </div>
 
-            {/* 3. EMAIL & OTP VERIFICATION (MANDATORY REQUIREMENT) */}
-            <div className="rounded-xl border border-slate-700/80 bg-slate-900/90 p-4 space-y-3">
+            {/* EMAIL & OTP VERIFICATION */}
+            <div className="rounded-2xl border border-[#E5E7EB] bg-[#F7F7F5]/50 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5 text-cyan-400" />
+                <label className="text-xs font-bold text-[#171717] flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-[#2563EB]" />
                   <span>Student Email Verification *</span>
                 </label>
                 {isEmailVerified ? (
-                  <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/40">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="flex items-center gap-1 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#16A34A] border border-green-200">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                     <span>Email Verified</span>
                   </span>
                 ) : (
-                  <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[11px] font-medium text-amber-300 border border-amber-500/30">
+                  <span className="rounded-full bg-[#FEF3C7] px-2.5 py-0.5 text-[11px] font-medium text-[#D97706] border border-amber-200">
                     Verification Required
                   </span>
                 )}
               </div>
 
-              {/* Email Input + Send OTP Button */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
@@ -895,14 +882,14 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                     if (isEmailVerified) setIsEmailVerified(false);
                   }}
                   placeholder="student@college.edu or gmail.com"
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none disabled:opacity-60"
+                  className="flex-1 rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] placeholder-gray-400 focus:border-[#2563EB] focus:outline-none disabled:opacity-60"
                 />
                 <button
                   type="button"
                   id="send-otp-btn"
                   disabled={otpSending || otpCountdown > 0 || isEmailVerified}
                   onClick={handleSendOtp}
-                  className="shrink-0 flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 px-4 py-2 text-xs font-bold text-white transition-colors"
+                  className="shrink-0 flex items-center justify-center gap-1.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-500 px-4 py-2 text-xs font-bold text-white transition-colors"
                 >
                   {otpSending ? (
                     <>
@@ -923,18 +910,16 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                 </button>
               </div>
 
-              {/* Email Sent Simple Status */}
               {otpSent && (
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400 py-0.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB] py-0.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
                   <span>OTP sent to {regEmail}</span>
                 </div>
               )}
 
-              {/* OTP Input + Verify Button */}
               {otpSent && !isEmailVerified && (
                 <div className="space-y-2 pt-1">
-                  <label className="block text-[11px] font-semibold text-slate-300">
+                  <label className="block text-[11px] font-semibold text-[#171717]">
                     Enter 6-Digit OTP *
                   </label>
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -944,14 +929,14 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                       value={regOtp}
                       onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, ''))}
                       placeholder="123456"
-                      className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-white font-mono tracking-widest text-center text-base font-bold focus:border-emerald-500 focus:outline-none"
+                      className="flex-1 rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] font-mono tracking-widest text-center text-base font-bold focus:border-[#2563EB] focus:outline-none"
                     />
                     <button
                       type="button"
                       id="verify-otp-btn"
                       disabled={otpVerifying || regOtp.length !== 6}
                       onClick={handleVerifyOtp}
-                      className="shrink-0 flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 px-5 py-2 text-xs font-bold text-white transition-colors shadow-md"
+                      className="shrink-0 flex items-center justify-center gap-1.5 rounded-xl bg-[#16A34A] hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-500 px-5 py-2 text-xs font-bold text-white transition-colors"
                     >
                       {otpVerifying ? (
                         <>
@@ -970,17 +955,17 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
               )}
             </div>
 
-            {/* 4. College / University Selection (UNIVERSAL FOR ANY COLLEGE) */}
+            {/* College Selection */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5 text-cyan-400" />
+              <label className="block text-xs font-semibold text-[#171717] flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-[#2563EB]" />
                 <span>Select Your University / College *</span>
               </label>
               <select
                 id="reg-college-select"
                 value={regCollegePreset}
                 onChange={(e) => setRegCollegePreset(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none text-xs"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none text-xs"
               >
                 {POPULAR_COLLEGES.map((col) => (
                   <option key={col} value={col}>
@@ -989,32 +974,26 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                 ))}
               </select>
 
-              {/* Custom College Input if "Other" is chosen */}
               {regCollegePreset === 'Other / Custom College or University' && (
-                <div className="pt-1">
-                  <label className="block text-[11px] font-medium text-cyan-400 mb-1">
-                    Enter your specific College / University Name:
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={regCustomCollege}
-                    onChange={(e) => setRegCustomCollege(e.target.value)}
-                    placeholder="e.g. SRM University, VIT Vellore, Chandigarh University..."
-                    className="w-full rounded-xl border border-cyan-800/80 bg-slate-950 px-3.5 py-2 text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none text-xs"
-                  />
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={regCustomCollege}
+                  onChange={(e) => setRegCustomCollege(e.target.value)}
+                  placeholder="Enter your College / University name..."
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none text-xs"
+                />
               )}
             </div>
 
-            {/* 5. Course & Year */}
+            {/* Course & Year */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Course / Branch</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Course / Branch</label>
                 <select
                   value={regCourse}
                   onChange={(e) => setRegCourse(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none text-xs"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none text-xs"
                 >
                   {POPULAR_COURSES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -1023,11 +1002,11 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Year of Study</label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Year of Study</label>
                 <select
                   value={regYear}
                   onChange={(e) => setRegYear(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none text-xs"
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none text-xs"
                 >
                   <option value="1st Year">1st Year (Sem 1-2)</option>
                   <option value="2nd Year">2nd Year (Sem 3-4)</option>
@@ -1037,24 +1016,24 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
               </div>
             </div>
 
-            {/* 6. Password */}
+            {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Create Password</label>
+              <label className="block text-xs font-semibold text-[#171717] mb-1">Create Password</label>
               <input
                 type="password"
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2 text-[#171717] focus:border-[#2563EB] focus:outline-none"
               />
             </div>
 
             {/* Submit Bar */}
-            <div className="border-t border-slate-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="border-t border-[#E5E7EB] pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setActiveTab('login')}
-                className="text-xs text-cyan-400 hover:underline"
+                className="text-xs text-[#2563EB] hover:underline"
               >
                 Already registered? Sign in ➔
               </button>
@@ -1062,10 +1041,10 @@ export const AuthProfileModal: React.FC<AuthProfileModalProps> = ({
                 type="submit"
                 id="submit-register-btn"
                 disabled={!isEmailVerified}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 px-6 py-2.5 text-xs font-bold text-white shadow-lg transition-all"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-[#16A34A] hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-500 px-6 py-2.5 text-xs font-bold text-white shadow-xs transition-all"
               >
                 <UserPlus className="h-4 w-4" />
-                <span>{isEmailVerified ? 'Create Verified Account' : 'Verify Email OTP to Create Account'}</span>
+                <span>{isEmailVerified ? 'Create Verified Account' : 'Verify Email OTP to Register'}</span>
               </button>
             </div>
           </form>

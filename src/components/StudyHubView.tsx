@@ -16,28 +16,23 @@ import {
   UploadCloud,
   Star,
   MessageSquare,
-  ThumbsUp,
+  GraduationCap,
+  Plus,
 } from 'lucide-react';
-import { StudyResource, StudyResourceCategory, ActiveTab, StudentProfile } from '../types';
+import { StudyResource, StudyResourceCategory, StudentProfile, ActiveTab } from '../types';
 import { BookReaderModal } from './BookReaderModal';
 import { ResourceCommentsModal } from './ResourceCommentsModal';
-import { downloadResourcePdf } from '../utils/bookContent';
 
 interface StudyHubViewProps {
   resources: StudyResource[];
   savedResourceIds: string[];
   onToggleSaveResource: (id: string) => void;
   onNavigate: (tab: ActiveTab) => void;
-  onOpenBook?: (resource: StudyResource, mode?: 'reader' | 'pdf') => void;
   onOpenUploadModal?: () => void;
-  profile?: StudentProfile;
+  profile: StudentProfile;
   onAddResourceComment?: (
     resourceId: string,
-    data: {
-      rating: number;
-      comment: string;
-      tag?: string;
-    }
+    data: { rating: number; comment: string; tag?: string }
   ) => Promise<void>;
   onLikeResourceComment?: (resourceId: string, commentId: string) => Promise<void>;
 }
@@ -47,8 +42,6 @@ const CATEGORIES: StudyResourceCategory[] = [
   'Reference Books',
   'Notes',
   'Authorized Digital Resources',
-  'PYQs',
-  'AI Practice',
 ];
 
 export const StudyHubView: React.FC<StudyHubViewProps> = ({
@@ -56,479 +49,298 @@ export const StudyHubView: React.FC<StudyHubViewProps> = ({
   savedResourceIds = [],
   onToggleSaveResource,
   onNavigate,
-  onOpenBook,
   onOpenUploadModal,
-  profile = {
-    name: 'College Student',
-    rollNo: '2200540130000',
-    course: 'B.Tech CSE/IT',
-    year: '3rd Year',
-    college: 'BBDITM Lucknow',
-    email: 'student@bbditm.ac.in',
-    verified: true,
-    savedResourceIds: [],
-    savedPYQIds: [],
-    testsAttempted: 0,
-    averageScore: 85,
-    practiceScore: 85,
-    weakArea: '',
-    pyqsSolvedCount: 0,
-    focusWeakTopic: '',
-  },
+  profile,
   onAddResourceComment,
   onLikeResourceComment,
 }) => {
+  const [selectedSemester, setSelectedSemester] = useState<number | 'All'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [activeTopicExample, setActiveTopicExample] = useState<string>('Data Structures');
-  const [viewingResource, setViewingResource] = useState<StudyResource | null>(null);
-  const [feedbackResource, setFeedbackResource] = useState<StudyResource | null>(null);
-  const [modalInitialMode, setModalInitialMode] = useState<'reader' | 'pdf'>('reader');
-  const [downloadToast, setDownloadToast] = useState<string | null>(null);
+  const [readingResource, setReadingResource] = useState<StudyResource | null>(null);
+  const [commentingResource, setCommentingResource] = useState<StudyResource | null>(null);
 
-  const handleOpenBook = (res: StudyResource, mode: 'reader' | 'pdf' = 'reader') => {
-    setModalInitialMode(mode);
-    if (onOpenBook) {
-      onOpenBook(res, mode);
-    } else {
-      setViewingResource(res);
-    }
-  };
+  const filteredResources = (resources || []).filter((item) => {
+    if (!item) return false;
+    const matchesSemester = selectedSemester === 'All' || item.semester === selectedSemester;
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesSearch =
+      !searchQuery.trim() ||
+      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const handleDownloadPdfCard = (res: StudyResource) => {
-    setDownloadToast(`Preparing & downloading "${res.title}" PDF...`);
-    const ok = downloadResourcePdf(res);
-    setTimeout(() => {
-      if (ok) {
-        setDownloadToast(`"${res.title}" PDF downloaded to your device!`);
-      } else {
-        setDownloadToast(`"${res.title}" document downloaded.`);
-      }
-      setTimeout(() => setDownloadToast(null), 4500);
-    }, 600);
-
-    // Also open the book reader in PDF mode so user immediately sees the PDF
-    handleOpenBook(res, 'pdf');
-  };
-
-  const topicBundles = [
-    {
-      topic: 'Data Structures',
-      physicalBook: 'Physical Book: Core Data Structures in C++',
-      authorizedMaterial: 'Authorized Material: Department Lecture Notes (PDF)',
-      notes: 'Notes: Handwritten Unit 1-5 Topper Summary',
-      pyqs: 'PYQs: 2021-2024 Solved End-Sem Papers',
-      aiPractice: 'AI Practice: 15 Interactive Doubts',
-    },
-    {
-      topic: 'Computer Networks',
-      physicalBook: 'Reference: Computer Networking: A Top-Down Approach',
-      authorizedMaterial: 'Authorized Material: Department TCP/IP Packet Tracing Lab Guide',
-      notes: 'Notes: OSI 7-Layer vs TCP/IP Handshake Master Sheet',
-      pyqs: 'PYQs: 2022-2025 Solved University Papers',
-      aiPractice: 'AI Practice: TCP Congestion Control Simulation Test',
-    },
-    {
-      topic: 'DBMS',
-      physicalBook: 'Standard: Database System Concepts (Korth 7th Ed)',
-      authorizedMaterial: 'Authorized Material: Relational Algebra & SQL Handouts',
-      notes: 'Notes: Normalization (1NF to BCNF) Closure Derivations',
-      pyqs: 'PYQs: 2021-2025 End-Sem Exam Papers with Solutions',
-      aiPractice: 'AI Practice: 20 Functional Dependency Doubts & Drill',
-    },
-  ];
-
-  const currentBundle = topicBundles.find((b) => b.topic === activeTopicExample) || topicBundles[0];
-
-  const filteredResources = (resources || []).filter((res) => {
-    if (!res) return false;
-    if (selectedCategory !== 'All' && res.category !== selectedCategory) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        res.title.toLowerCase().includes(q) ||
-        res.subject.toLowerCase().includes(q) ||
-        res.description.toLowerCase().includes(q) ||
-        res.author.toLowerCase().includes(q)
-      );
-    }
-    return true;
+    return matchesSemester && matchesCategory && matchesSearch;
   });
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Study Hub Header */}
-      <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-6 sm:p-8 space-y-6 shadow-xl">
-        <div className="border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              ACADEMIC STUDY REPOSITORY
-            </span>
-            <span className="rounded-full bg-emerald-950 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-800/60">
-              Curated & Verified
-            </span>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Complete Digital Study Hub</h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-                Everything for better preparation: Standard textbooks, handwritten topper summary notes, authorized PDFs, and PYQs in one place.
-              </p>
+    <div className="space-y-6 pb-16">
+      {/* 1. Study Hub Banner */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+                Open Student Digital Library
+              </span>
             </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#171717] mt-1.5 tracking-tight">
+              Curriculum Study Hub & Notes
+            </h1>
+            <p className="text-xs sm:text-sm text-[#6B7280] mt-0.5">
+              Access textbooks, verified topper handwritten notes, and semester PDFs with instant interactive reading and student reviews.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
             {onOpenUploadModal && (
               <button
-                id="header-upload-btn"
                 onClick={onOpenUploadModal}
-                className="self-start sm:self-center flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-950 transition-all active:scale-95 shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
               >
                 <UploadCloud className="h-4 w-4" />
-                <span>Upload PDF / Notes</span>
+                <span>Upload Book / Notes</span>
               </button>
             )}
           </div>
         </div>
+      </section>
 
-        {/* Topic Bundle Showcase: One Topic ➔ Multiple Learning Resources */}
-        <div className="rounded-xl border border-cyan-500/40 bg-cyan-950/20 p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-900/60 pb-3">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
-                INTEGRATED MULTI-RESOURCE LEARNING
-              </p>
-              <h2 className="text-base sm:text-lg font-bold text-white">
-                One Topic ➔ Multiple Learning Resources
-              </h2>
-            </div>
-
-            {/* Quick switcher for topic example */}
-            <div className="flex flex-wrap gap-1.5">
-              {topicBundles.map((b) => (
-                <button
-                  key={b.topic}
-                  onClick={() => setActiveTopicExample(b.topic)}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
-                    activeTopicExample === b.topic
-                      ? 'bg-cyan-500 text-white shadow-md'
-                      : 'border border-cyan-900/70 bg-cyan-950/60 text-cyan-300 hover:bg-cyan-900/40'
-                  }`}
-                >
-                  {b.topic}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {/* 1. Physical Book */}
-            <div
-              onClick={() => onNavigate('marketplace')}
-              className="cursor-pointer rounded-lg border border-cyan-800/60 bg-slate-900/80 p-3 hover:border-cyan-400 transition-colors flex flex-col justify-between group"
-            >
-              <div>
-                <span className="text-[10px] font-bold uppercase text-cyan-400">1. MARKETPLACE</span>
-                <p className="text-xs font-semibold text-white mt-1 group-hover:text-cyan-300 transition-colors">{currentBundle.physicalBook}</p>
-              </div>
-              <span className="text-[11px] text-cyan-300 mt-2 flex items-center gap-1 font-medium">
-                View in Marketplace ➔
-              </span>
-            </div>
-
-            {/* 2. Authorized Digital Material */}
-            <div
-              onClick={() => {
-                setSelectedCategory('Authorized Digital Resources');
-                setSearchQuery(activeTopicExample);
-              }}
-              className="cursor-pointer rounded-lg border border-blue-800/60 bg-slate-900/80 p-3 hover:border-blue-400 transition-colors flex flex-col justify-between group"
-            >
-              <div>
-                <span className="text-[10px] font-bold uppercase text-blue-400">2. AUTHORIZED MATERIAL</span>
-                <p className="text-xs font-semibold text-white mt-1 group-hover:text-blue-300 transition-colors">{currentBundle.authorizedMaterial}</p>
-              </div>
-              <span className="text-[11px] text-blue-300 mt-2 flex items-center gap-1 font-medium">
-                Filter Materials ➔
-              </span>
-            </div>
-
-            {/* 3. Notes */}
-            <div
-              onClick={() => {
-                setSelectedCategory('Notes');
-                setSearchQuery(activeTopicExample);
-              }}
-              className="cursor-pointer rounded-lg border border-emerald-800/60 bg-slate-900/80 p-3 hover:border-emerald-400 transition-colors flex flex-col justify-between group"
-            >
-              <div>
-                <span className="text-[10px] font-bold uppercase text-emerald-400">3. TOPPER NOTES</span>
-                <p className="text-xs font-semibold text-white mt-1 group-hover:text-emerald-300 transition-colors">{currentBundle.notes}</p>
-              </div>
-              <span className="text-[11px] text-emerald-300 mt-2 flex items-center gap-1 font-medium">
-                View Topper Notes ➔
-              </span>
-            </div>
-
-            {/* 4. PYQs */}
-            <div
-              onClick={() => onNavigate('pyq-bank')}
-              className="cursor-pointer rounded-lg border border-amber-800/60 bg-slate-900/80 p-3 hover:border-amber-400 transition-colors flex flex-col justify-between group"
-            >
-              <div>
-                <span className="text-[10px] font-bold uppercase text-amber-400">4. PYQ BANK</span>
-                <p className="text-xs font-semibold text-white mt-1 group-hover:text-amber-300 transition-colors">{currentBundle.pyqs}</p>
-              </div>
-              <span className="text-[11px] text-amber-300 mt-2 flex items-center gap-1 font-medium">
-                Solve with AI ➔
-              </span>
-            </div>
-
-            {/* 5. AI Practice */}
-            <div
-              onClick={() => onNavigate('practice-engine')}
-              className="cursor-pointer rounded-lg border border-purple-800/60 bg-slate-900/80 p-3 hover:border-purple-400 transition-colors flex flex-col justify-between group"
-            >
-              <div>
-                <span className="text-[10px] font-bold uppercase text-purple-400">5. AI PRACTICE</span>
-                <p className="text-xs font-semibold text-white mt-1 group-hover:text-purple-300 transition-colors">{currentBundle.aiPractice}</p>
-              </div>
-              <span className="text-[11px] text-purple-300 mt-2 flex items-center gap-1 font-medium">
-                Start Quiz Loop ➔
-              </span>
-            </div>
-          </div>
+      {/* 2. Topic Bundles Quick Explorer */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
+            Core Semester Topic Bundles
+          </h2>
         </div>
-      </div>
 
-      {/* Search and Category Filter */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { name: 'Computer Networks', sem: 'Sem 5', count: 6, tag: 'TCP/IP, Routing' },
+            { name: 'Database Systems', sem: 'Sem 4', count: 8, tag: 'SQL, Normalization' },
+            { name: 'Data Structures', sem: 'Sem 3', count: 12, tag: 'Trees, Graphs' },
+            { name: 'Operating Systems', sem: 'Sem 4', count: 7, tag: 'Deadlocks, Memory' },
+            { name: 'Software Eng.', sem: 'Sem 6', count: 5, tag: 'Agile, UML' },
+          ].map((topic) => (
+            <div
+              key={topic.name}
+              onClick={() => setSearchQuery(topic.name)}
+              className="cursor-pointer rounded-2xl bg-white border border-[#E5E7EB] p-4 hover:border-[#2563EB]/50 hover:shadow-xs transition-all space-y-2 group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-md">
+                  {topic.sem}
+                </span>
+                <span className="text-[11px] text-[#6B7280] font-mono">{topic.count} PDFs</span>
+              </div>
+              <h3 className="text-xs font-bold text-[#171717] group-hover:text-[#2563EB] transition-colors truncate">
+                {topic.name}
+              </h3>
+              <p className="text-[10px] text-[#6B7280] truncate">{topic.tag}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. Search and Semester Filters */}
+      <section className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
             <input
               type="text"
+              placeholder="Search by book title, subject, topper author or topic..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search textbooks, syllabus notes, topper handouts by subject (e.g. Data Structures, DBMS, OS, Networks)..."
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] shadow-xs"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#171717]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-          {onOpenUploadModal && (
-            <button
-              onClick={onOpenUploadModal}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 hover:bg-emerald-900/40 px-4 py-2.5 text-xs font-semibold text-emerald-300 transition-colors shrink-0"
+
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs"
             >
-              <UploadCloud className="h-4 w-4" />
-              <span>Upload PDF / Notes</span>
-            </button>
-          )}
+              <option value="All">All Semesters</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                <option key={s} value={s}>Semester {s}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex flex-wrap gap-2">
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           <button
-            onClick={() => {
-              setSelectedCategory('All');
-              setSearchQuery('');
-            }}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
-              selectedCategory === 'All' && !searchQuery
-                ? 'bg-emerald-600 text-white'
-                : 'border border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700'
+            onClick={() => setSelectedCategory('All')}
+            className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              selectedCategory === 'All'
+                ? 'bg-[#171717] text-white shadow-xs'
+                : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
             }`}
           >
-            All Resources ({resources?.length || 0})
+            All Resources ({resources.length})
           </button>
           {CATEGORIES.map((cat) => {
-            const count = (resources || []).filter((r) => r && r.category === cat).length;
+            const count = (resources || []).filter((r) => r.category === cat).length;
             const isSelected = selectedCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
                   isSelected
-                    ? 'bg-emerald-600 text-white'
-                    : 'border border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700'
+                    ? 'bg-[#2563EB] text-white font-semibold shadow-xs'
+                    : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
                 }`}
               >
-                {cat === 'Notes' ? 'Topper Notes & Handouts' : cat} ({count})
+                {cat} ({count})
               </button>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Resource Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredResources.map((res) => {
-          const isSaved = savedResourceIds.includes(res.id);
-          return (
-            <div
-              key={res.id}
-              className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 hover:border-slate-700 hover:shadow-lg transition-all"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
-                      {res.category}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFeedbackResource(res);
-                      }}
-                      className="flex items-center gap-1 rounded-full bg-amber-950/70 hover:bg-amber-900/80 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-800/60 transition-colors shadow-sm"
-                      title="View peer ratings & comments"
-                    >
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      <span>{(res.rating ?? 4.9).toFixed(1)}</span>
-                      <span className="text-amber-400/70 font-normal">
-                        ({res.comments?.length || res.ratingsCount || 0})
+      {/* 4. Resources Cards Grid */}
+      <section>
+        <div className="flex items-center justify-between mb-3 text-xs text-[#6B7280]">
+          <span>Showing {filteredResources.length} curriculum materials</span>
+          <span>Interactive in-browser PDF reader available</span>
+        </div>
+
+        {filteredResources.length === 0 ? (
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center space-y-3 shadow-xs">
+            <BookOpen className="h-8 w-8 text-[#9CA3AF] mx-auto" />
+            <h3 className="text-sm font-bold text-[#171717]">No study resources found</h3>
+            <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
+              Try changing semester or search terms. You can also upload your own handwritten notes or PDF textbook.
+            </p>
+            {onOpenUploadModal && (
+              <button
+                onClick={onOpenUploadModal}
+                className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
+              >
+                Upload Resource Now
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {filteredResources.map((res) => {
+              const isSaved = savedResourceIds.includes(res.id);
+              const commentsCount = (res.comments || []).length || (res.ratingsCount || 12);
+              const ratingScore = res.rating || 4.9;
+
+              return (
+                <div
+                  key={res.id}
+                  className="rounded-2xl bg-white border border-[#E5E7EB] p-5 shadow-xs hover:shadow-md hover:border-[#2563EB]/40 transition-all flex flex-col justify-between space-y-4 group"
+                >
+                  <div className="space-y-3">
+                    {/* Category & Save button */}
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="inline-block rounded-md bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#DBEAFE]">
+                        Sem {res.semester} • {res.category}
                       </span>
+                      <button
+                        onClick={() => onToggleSaveResource(res.id)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isSaved
+                            ? 'text-[#2563EB] bg-[#EFF6FF]'
+                            : 'text-[#9CA3AF] hover:text-[#171717] hover:bg-[#F7F7F5]'
+                        }`}
+                        title={isSaved ? 'Saved in library' : 'Save to library'}
+                      >
+                        {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                      </button>
+                    </div>
+
+                    {/* Title & Subject */}
+                    <div>
+                      <h3 className="text-sm font-bold text-[#171717] group-hover:text-[#2563EB] transition-colors line-clamp-2">
+                        {res.title}
+                      </h3>
+                      <p className="text-xs text-[#6B7280] mt-0.5">
+                        {res.subject} • By {res.author}
+                      </p>
+                    </div>
+
+                    <p className="text-xs text-[#6B7280] line-clamp-2 leading-relaxed">
+                      {res.description}
+                    </p>
+
+                    {/* Stats bar */}
+                    <div className="pt-2 border-t border-[#E5E7EB] flex items-center justify-between text-xs text-[#6B7280]">
+                      <button
+                        onClick={() => setCommentingResource(res)}
+                        className="flex items-center gap-1 text-amber-500 font-semibold hover:underline"
+                      >
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span>{ratingScore.toFixed(1)}</span>
+                        <span className="text-[#6B7280] font-normal">({commentsCount})</span>
+                      </button>
+
+                      <span className="text-[11px] text-[#6B7280]">
+                        {res.fileSize || 'PDF'} {res.pages ? `• ${res.pages} pgs` : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => setReadingResource(res)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Read Online</span>
+                    </button>
+
+                    <button
+                      onClick={() => setCommentingResource(res)}
+                      className="px-3 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#171717] text-xs font-medium transition-colors"
+                      title="Read Student Reviews"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <button
-                    onClick={() => onToggleSaveResource(res.id)}
-                    className="text-slate-400 hover:text-cyan-400 transition-colors"
-                    title={isSaved ? 'Remove from Saved' : 'Save to Study Hub'}
-                  >
-                    {isSaved ? (
-                      <BookmarkCheck className="h-5 w-5 text-cyan-400 fill-cyan-400" />
-                    ) : (
-                      <Bookmark className="h-5 w-5" />
-                    )}
-                  </button>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-                <div
-                  className="cursor-pointer group"
-                  onClick={() => handleOpenBook(res, 'reader')}
-                >
-                  <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors line-clamp-2">
-                    {res.title}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {res.subject} • Sem {res.semester} • {res.author}
-                  </p>
-                </div>
-
-                <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
-                  {res.description}
-                </p>
-
-                {res.unitsSummary && res.unitsSummary.length > 0 && (
-                  <div className="rounded-lg bg-slate-950/60 p-2.5 text-[11px] text-slate-400 space-y-1">
-                    <p className="font-semibold text-slate-300">Syllabus Coverage:</p>
-                    <p className="line-clamp-2">{res.unitsSummary[0]}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-slate-800/80 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackResource(res)}
-                    className="flex items-center gap-1 text-slate-300 hover:text-cyan-300 font-medium transition-colors"
-                    title="Open comments and student feedback"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>Feedback ({res.comments?.length || res.ratingsCount || 0})</span>
-                  </button>
-                  <span>•</span>
-                  <span>{(Number(res.downloads ?? 0)).toLocaleString()} dl</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackResource(res)}
-                    className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-amber-300 transition-colors"
-                    title="Rate & give feedback"
-                  >
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span>Review</span>
-                  </button>
-                  <button
-                    onClick={() => handleOpenBook(res, 'reader')}
-                    className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors"
-                    title="Read book chapters & notes"
-                  >
-                    <Eye className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>View</span>
-                  </button>
-                  <button
-                    onClick={() => handleDownloadPdfCard(res)}
-                    className="flex items-center gap-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-2.5 py-1.5 text-xs font-bold text-white transition-all shadow-sm active:scale-95"
-                    title="Download & View PDF document"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>PDF</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Toast Feedback for PDF Generation */}
-      {downloadToast && (
-        <div className="fixed top-20 right-6 z-50 flex items-center gap-3 rounded-xl bg-slate-900 border border-cyan-500/50 px-4 py-3 text-cyan-200 text-xs shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2">
-          <div className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
-          <Download className="h-4 w-4 text-cyan-400 shrink-0" />
-          <span className="font-semibold">{downloadToast}</span>
-        </div>
-      )}
-
-      {/* FULL BOOK READER & OFFICIAL ACADEMIC PDF MODAL */}
-      {viewingResource && (
+      {/* MODAL: INTERACTIVE BOOK READER */}
+      {readingResource && (
         <BookReaderModal
-          resource={viewingResource}
-          onClose={() => setViewingResource(null)}
-          isSaved={savedResourceIds.includes(viewingResource.id)}
-          onToggleSave={onToggleSaveResource}
-          initialViewMode={modalInitialMode}
-          onOpenFeedback={(res) => setFeedbackResource(res)}
+          resource={readingResource}
+          onClose={() => setReadingResource(null)}
+          onOpenComments={() => {
+            const res = readingResource;
+            setReadingResource(null);
+            setCommentingResource(res);
+          }}
         />
       )}
 
-      {/* STUDY RESOURCE COMMENTS & RATING MODAL */}
-      {feedbackResource && (
+      {/* MODAL: STUDENT REVIEWS & COMMENTS */}
+      {commentingResource && (
         <ResourceCommentsModal
-          resource={feedbackResource}
-          onClose={() => setFeedbackResource(null)}
+          resource={commentingResource}
+          onClose={() => setCommentingResource(null)}
           profile={profile}
-          onAddComment={async (resourceId, data) => {
-            if (onAddResourceComment) {
-              await onAddResourceComment(resourceId, data);
-            }
-            setFeedbackResource((prev) => {
-              if (!prev || prev.id !== resourceId) return prev;
-              const newComm = {
-                id: `comm-${Date.now()}`,
-                resourceId,
-                authorName: profile.name,
-                authorRoll: profile.rollNo,
-                authorBranch: profile.course,
-                authorYear: profile.year,
-                rating: data.rating,
-                comment: data.comment,
-                tag: data.tag,
-                createdAt: 'Just now',
-                helpfulCount: 0,
-              };
-              const updatedList = [newComm, ...(prev.comments || [])];
-              const avg = Number((updatedList.reduce((acc, c) => acc + (c.rating || 5), 0) / updatedList.length).toFixed(1));
-              return {
-                ...prev,
-                rating: avg,
-                ratingsCount: updatedList.length,
-                comments: updatedList,
-              };
-            });
-          }}
+          onAddComment={onAddResourceComment || (async () => {})}
           onLikeComment={onLikeResourceComment}
         />
       )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search,
-  PlusCircle,
+  Plus,
   MapPin,
   Star,
   CheckCircle2,
@@ -17,6 +17,8 @@ import {
   Building2,
   Compass,
   Globe,
+  ArrowRight,
+  ExternalLink,
 } from 'lucide-react';
 import { MarketplaceItem, MarketplaceCategory, ItemCondition, StudentProfile } from '../types';
 
@@ -75,10 +77,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   // Report form
   const [reportReason, setReportReason] = useState<string>('');
 
-  // Helper to extract student college shortname / identity
   const userCollege = (profile?.college || 'BBDITM').trim().toLowerCase();
 
-  // Distinct list of colleges present in items
   const availableColleges = Array.from(
     new Set(
       (items || [])
@@ -87,7 +87,6 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
     )
   );
 
-  // Helper to check if an item matches user's college
   const isItemMyCollege = (item: MarketplaceItem) => {
     if (!item?.sellerCollege) return true;
     const itemCol = item.sellerCollege.toLowerCase();
@@ -99,272 +98,182 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
     return itemCol === userCollege;
   };
 
-  // Helper to check if an item is nearby (same city or regional)
-  const isItemNearby = (item: MarketplaceItem) => {
-    if (!item) return false;
-    // Items with Lucknow city or location
-    const city = (item.sellerCity || '').toLowerCase();
-    const loc = (item.location || '').toLowerCase();
-    const col = (item.sellerCollege || '').toLowerCase();
-    return (
-      city.includes('lucknow') ||
-      loc.includes('lucknow') ||
-      loc.includes('hostel') ||
-      loc.includes('campus') ||
-      col.includes('bbd') ||
-      col.includes('iet') ||
-      col.includes('aktu') ||
-      col.includes('amity') ||
-      col.includes('integral')
-    );
-  };
-
-  // Filter items
   const filteredItems = (items || []).filter((item) => {
     if (!item) return false;
-    if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
-    if (selectedCondition !== 'All' && item.condition !== selectedCondition) return false;
-    if (statusFilter !== 'All' && item.status !== statusFilter) return false;
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesCondition = selectedCondition === 'All' || item.condition === selectedCondition;
+    const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
 
-    // Campus Scope Filtering
+    const matchesSearch =
+      !searchQuery.trim() ||
+      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.sellerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.sellerCollege?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.location?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    let matchesScope = true;
     if (campusScope === 'my_college') {
-      if (!isItemMyCollege(item)) return false;
+      matchesScope = isItemMyCollege(item);
     } else if (campusScope === 'nearby') {
-      if (!isItemNearby(item)) return false;
+      const userCity = 'lucknow';
+      matchesScope =
+        (item.sellerCity && item.sellerCity.toLowerCase().includes(userCity)) ||
+        (item.sellerCollege && item.sellerCollege.toLowerCase().includes(userCity)) ||
+        isItemMyCollege(item);
     } else if (campusScope === 'custom' && customCollegeFilter !== 'All') {
-      if (!item.sellerCollege || !item.sellerCollege.toLowerCase().includes(customCollegeFilter.toLowerCase())) {
-        return false;
-      }
+      matchesScope = item.sellerCollege === customCollegeFilter;
     }
 
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = (item.title || '').toLowerCase().includes(q);
-      const matchDesc = (item.description || '').toLowerCase().includes(q);
-      const matchLoc = (item.location || '').toLowerCase().includes(q);
-      const matchSeller = (item.sellerName || '').toLowerCase().includes(q);
-      const matchCollege = (item.sellerCollege || '').toLowerCase().includes(q);
-      const matchCity = (item.sellerCity || '').toLowerCase().includes(q);
-      if (!matchTitle && !matchDesc && !matchLoc && !matchSeller && !matchCollege && !matchCity) return false;
-    }
-    return true;
+    return matchesCategory && matchesCondition && matchesStatus && matchesSearch && matchesScope;
   });
 
-  const handleSendChat = (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
     setChatHistory((prev) => [
       ...prev,
       { sender: 'me', text: chatMessage.trim(), time: 'Just now' },
     ]);
-    const currentMsg = chatMessage;
     setChatMessage('');
-
-    setTimeout(() => {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          sender: 'seller',
-          text: `Great! Let's meet at ${contactModalItem?.location || 'Campus Canteen'} after classes today around 5:30 PM. Call me if needed!`,
-          time: 'Just now',
-        },
-      ]);
-    }, 900);
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewModalItem) return;
-    await onAddReview(reviewModalItem.id, reviewRating, reviewComment || 'Verified campus transaction. Item as described!');
-    setReviewModalItem(null);
+    if (!reviewModalItem || !reviewComment.trim()) return;
+    await onAddReview(reviewModalItem.id, reviewRating, reviewComment.trim());
     setReviewComment('');
+    setReviewModalItem(null);
   };
 
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reportModalItem) return;
-    await onReportItem(reportModalItem.id, reportReason || 'Price check / Inappropriate content');
-    setReportModalItem(null);
+    if (!reportModalItem || !reportReason.trim()) return;
+    await onReportItem(reportModalItem.id, reportReason.trim());
     setReportReason('');
+    setReportModalItem(null);
   };
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Header section with Slide 5 Workflow */}
-      <div className="rounded-2xl border border-slate-800 bg-[#0f172a] p-6 sm:p-8 space-y-6 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div className="space-y-6 pb-16">
+      {/* 1. Header & Quick Post CTA */}
+      <section className="rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">CAMPUS COMMERCE</span>
-              <span className="rounded-full bg-cyan-950 px-2.5 py-0.5 text-[10px] font-semibold text-cyan-300 border border-cyan-800/60">
-                Simple • Local • Affordable
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+                Roll-Number Verified Peer Commerce
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mt-1">Student Marketplace</h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-              Buy & sell books, cycles, electronics, fans, desks and hostel essentials directly with verified campus peers.
+            <h1 className="text-xl sm:text-2xl font-bold text-[#171717] mt-1.5 tracking-tight">
+              Campus Student Marketplace
+            </h1>
+            <p className="text-xs sm:text-sm text-[#6B7280] mt-0.5">
+              Buy & sell textbooks, engineering calculators, cycles, and hostel furniture directly from verified peers.
             </p>
           </div>
 
           <button
-            id="create-listing-btn"
             onClick={onOpenNewListing}
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-cyan-950/40 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98] shrink-0"
           >
-            <PlusCircle className="h-4 w-4" />
-            <span>Create New Listing</span>
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>Sell on Campus</span>
           </button>
         </div>
 
-        {/* Slide 5: 6-Step Workflow Banner */}
-        <div className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            HOW MARKETPLACE WORKS (6-STEP WORKFLOW)
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            {[
-              { num: '1', title: 'Create Profile', desc: 'Verified student ID / college roll' },
-              { num: '2', title: 'Create Listing', desc: 'Photos, price, condition & hostel location' },
-              { num: '3', title: 'Search', desc: 'Peers discover by category & budget' },
-              { num: '4', title: 'Contact', desc: 'Direct instant on-platform chat' },
-              { num: '5', title: 'Deal / Pickup', desc: 'Safe handoff at hostel or canteen' },
-              { num: '6', title: 'Review', desc: 'Rate seller & build campus trust' },
-            ].map((step) => (
-              <div
-                key={step.num}
-                className="rounded-lg border border-slate-800/80 bg-slate-900/60 p-3 flex flex-col justify-between"
-              >
-                <div>
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-900/60 text-[10px] font-bold text-cyan-300">
-                    {step.num}
-                  </span>
-                  <p className="text-xs font-semibold text-white mt-1.5">{step.title}</p>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        {/* Campus Scope Tabs */}
+        <div className="mt-5 pt-4 border-t border-[#E5E7EB] flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-[#6B7280] mr-1">Campus Scope:</span>
+          <button
+            onClick={() => setCampusScope('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              campusScope === 'all'
+                ? 'bg-[#2563EB] text-white shadow-xs'
+                : 'bg-[#F7F7F5] text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5" />
+              <span>All Colleges & Universities</span>
+            </span>
+          </button>
 
-      {/* Filter and Search Bar */}
-      <div className="space-y-4">
-        {/* Campus & College Scope Filter Bar (USER INTENT REQUIREMENT) */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 space-y-3 shadow-md">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-cyan-400" />
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
-                Campus & College Location Filter
-              </span>
-              <span className="rounded-full bg-cyan-950 px-2 py-0.5 text-[10px] font-semibold text-cyan-300 border border-cyan-800/60">
-                Active: {campusScope === 'my_college' ? 'My College Only' : campusScope === 'nearby' ? 'Nearby Campuses' : campusScope === 'custom' ? customCollegeFilter : 'All Colleges'}
-              </span>
-            </div>
+          <button
+            onClick={() => setCampusScope('my_college')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              campusScope === 'my_college'
+                ? 'bg-[#2563EB] text-white shadow-xs'
+                : 'bg-[#F7F7F5] text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5" />
+              <span>My Campus ({profile?.college ? profile.college.split(' ')[0] : 'My College'})</span>
+            </span>
+          </button>
 
-            {/* Quick Scope Switcher */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <button
-                id="filter-my-college-btn"
-                type="button"
-                onClick={() => {
-                  setCampusScope('my_college');
-                  setCustomCollegeFilter('All');
-                }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
-                  campusScope === 'my_college'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Building2 className="h-3.5 w-3.5 text-emerald-300" />
-                <span>My College ({profile?.college ? (profile.college.includes('BBD') ? 'BBD' : profile.college.slice(0, 16) + '...') : 'Campus'})</span>
-              </button>
+          <button
+            onClick={() => setCampusScope('nearby')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              campusScope === 'nearby'
+                ? 'bg-[#2563EB] text-white shadow-xs'
+                : 'bg-[#F7F7F5] text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Compass className="h-3.5 w-3.5" />
+              <span>Same City / Region</span>
+            </span>
+          </button>
 
-              <button
-                id="filter-nearby-colleges-btn"
-                type="button"
-                onClick={() => {
-                  setCampusScope('nearby');
-                  setCustomCollegeFilter('All');
-                }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
-                  campusScope === 'nearby'
-                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Compass className="h-3.5 w-3.5 text-cyan-300" />
-                <span>Nearby Colleges</span>
-              </button>
-
-              <button
-                id="filter-all-colleges-btn"
-                type="button"
-                onClick={() => {
-                  setCampusScope('all');
-                  setCustomCollegeFilter('All');
-                }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
-                  campusScope === 'all'
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950/40'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Globe className="h-3.5 w-3.5 text-indigo-300" />
-                <span>All Universities</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Specific College Selector Dropdown */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-slate-800/80 text-xs">
-            <span className="text-slate-400 shrink-0">Or filter by specific College / University:</span>
+          {availableColleges.length > 0 && (
             <select
-              id="specific-college-select"
               value={customCollegeFilter}
               onChange={(e) => {
-                const val = e.target.value;
-                setCustomCollegeFilter(val);
-                if (val === 'All') {
-                  setCampusScope('all');
-                } else {
-                  setCampusScope('custom');
-                }
+                setCustomCollegeFilter(e.target.value);
+                setCampusScope('custom');
               }}
-              className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+              className="text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl px-3 py-1.5 text-[#171717] focus:outline-none focus:border-[#2563EB]"
             >
-              <option value="All">All Campuses & Colleges (Showing items everywhere)</option>
+              <option value="All">Select Specific College...</option>
               {availableColleges.map((col) => (
-                <option key={col} value={col}>
-                  {col}
-                </option>
+                <option key={col} value={col}>{col}</option>
               ))}
             </select>
-          </div>
+          )}
         </div>
+      </section>
 
-        {/* Search input & status filter */}
+      {/* 2. Search & Category Filters */}
+      <section className="space-y-3">
         <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search bar */}
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
             <input
               type="text"
-              id="marketplace-search-input"
+              placeholder="Search books, calculators, bicycles, laptops, study lamps..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search books, cycles, fans, study tables, calculators, or hostel rooms..."
-              className="w-full rounded-xl border border-slate-800 bg-slate-900/90 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] text-xs sm:text-sm text-[#171717] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] shadow-xs"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#171717]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Condition & Status dropdowns */}
+          <div className="flex items-center gap-2 shrink-0">
             <select
-              id="condition-filter-select"
               value={selectedCondition}
               onChange={(e) => setSelectedCondition(e.target.value)}
-              className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs"
             >
               <option value="All">All Conditions</option>
               <option value="Like New">Like New</option>
@@ -373,41 +282,40 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             </select>
 
             <select
-              id="status-filter-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+              className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#2563EB] shadow-xs"
             >
               <option value="All">All Status</option>
-              <option value="available">Available Only</option>
-              <option value="sold">Sold Items</option>
+              <option value="available">Available</option>
+              <option value="sold">Sold</option>
             </select>
           </div>
         </div>
 
-        {/* 6 Category Pills from Slide 4 */}
-        <div className="flex flex-wrap gap-2 pt-1">
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setSelectedCategory('All')}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+            className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               selectedCategory === 'All'
-                ? 'bg-cyan-500 text-white shadow-md shadow-cyan-900/40'
-                : 'border border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700'
+                ? 'bg-[#171717] text-white shadow-xs'
+                : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
             }`}
           >
-            All Categories ({items?.length || 0})
+            All Items ({items.length})
           </button>
           {CATEGORIES.map((cat) => {
-            const count = (items || []).filter((i) => i && i.category === cat).length;
+            const count = (items || []).filter((i) => i.category === cat).length;
             const isSelected = selectedCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
                   isSelected
-                    ? 'bg-cyan-500 text-white shadow-md shadow-cyan-900/40'
-                    : 'border border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700'
+                    ? 'bg-[#2563EB] text-white font-semibold shadow-xs'
+                    : 'bg-white text-[#6B7280] hover:text-[#171717] border border-[#E5E7EB]'
                 }`}
               >
                 {cat} ({count})
@@ -415,345 +323,292 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Listings Grid */}
-      <div>
-        <div className="flex items-center justify-between pb-3">
-          <p className="text-xs font-medium text-slate-400">
-            Showing <span className="font-semibold text-white">{filteredItems?.length || 0}</span> campus listings
-          </p>
-          {statusFilter !== 'All' && (
-            <span className="text-xs text-cyan-400 font-medium">Filtering by status: {statusFilter}</span>
-          )}
+      {/* 3. Products Grid */}
+      <section>
+        <div className="flex items-center justify-between mb-3 text-xs text-[#6B7280]">
+          <span>Showing {filteredItems.length} student listings</span>
+          <span>Verified campus peer exchange</span>
         </div>
 
-        {(filteredItems?.length || 0) === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-12 text-center space-y-3">
-            <Tag className="h-10 w-10 text-slate-500 mx-auto" />
-            <h3 className="text-base font-semibold text-white">No items found</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Try adjusting your search keywords or category filters, or be the first to sell this item to your peers!
+        {filteredItems.length === 0 ? (
+          <div className="rounded-2xl bg-white border border-[#E5E7EB] p-12 text-center space-y-3 shadow-xs">
+            <Search className="h-8 w-8 text-[#9CA3AF] mx-auto" />
+            <h3 className="text-sm font-bold text-[#171717]">No items found matching your filters</h3>
+            <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
+              Try adjusting your category selection, search terms, or switch campus scope to "All Colleges".
             </p>
             <button
               onClick={() => {
                 setSelectedCategory('All');
                 setSelectedCondition('All');
-                setStatusFilter('All');
                 setSearchQuery('');
+                setCampusScope('all');
               }}
-              className="mt-2 rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+              className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
             >
-              Reset All Filters
+              Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filteredItems.map((item) => {
-              const isSeller = Boolean(item?.sellerName && profile?.name && item.sellerName === profile.name);
-              return (
-                <div
-                  key={item.id}
-                  id={`marketplace-card-${item.id}`}
-                  className="group flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/80 overflow-hidden transition-all hover:border-slate-700 hover:shadow-xl hover:shadow-cyan-950/20"
-                >
-                  {/* Image & Badges */}
-                  <div className="relative h-44 w-full bg-slate-950 overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {filteredItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-2xl bg-white border border-[#E5E7EB] overflow-hidden shadow-xs hover:shadow-md hover:border-[#2563EB]/40 transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  {/* Image container */}
+                  <div className="relative aspect-4/3 w-full bg-gray-100 overflow-hidden">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
-                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    {/* Condition badge */}
-                    <span className="absolute top-2.5 left-2.5 rounded-full bg-slate-900/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-slate-200 border border-slate-700">
-                      {item.condition}
-                    </span>
-
-                    {/* Status badge */}
-                    {item.status === 'sold' ? (
-                      <span className="absolute top-2.5 right-2.5 rounded-full bg-rose-600/90 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
-                        SOLD
+                    <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
+                      <span className="rounded-lg bg-white/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-[#171717] shadow-xs">
+                        {item.condition}
                       </span>
-                    ) : (
-                      <span className="absolute top-2.5 right-2.5 rounded-full bg-emerald-600/90 px-2.5 py-0.5 text-[10px] font-bold text-white">
-                        AVAILABLE
-                      </span>
-                    )}
-
-                    <div className="absolute bottom-2 left-2.5">
-                      <span className="rounded-lg bg-slate-950/90 backdrop-blur-sm px-2 py-0.5 text-xs font-extrabold text-cyan-400 border border-slate-800">
-                        ₹{(Number(item.price ?? 0)).toLocaleString()}
+                      {item.status === 'sold' && (
+                        <span className="rounded-lg bg-[#DC2626] text-white px-2 py-0.5 text-[10px] font-bold">
+                          SOLD
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className="rounded-lg bg-[#2563EB] text-white px-2.5 py-1 text-xs font-bold shadow-xs">
+                        ₹{item.price}
                       </span>
                     </div>
                   </div>
 
-                  {/* Body details */}
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400">
+                  {/* Body Content */}
+                  <div className="p-4 space-y-2.5">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-semibold text-[#2563EB] uppercase tracking-wider block truncate">
                         {item.category}
-                      </p>
-                      <h3 className="text-sm font-bold text-white line-clamp-1 mt-0.5" title={item.title}>
+                      </span>
+                      <h3 className="text-sm font-bold text-[#171717] line-clamp-1 group-hover:text-[#2563EB] transition-colors">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+                      <p className="text-xs text-[#6B7280] line-clamp-2 leading-relaxed">
                         {item.description}
                       </p>
                     </div>
 
-                    {/* Location & Seller info with College tags */}
-                    <div className="space-y-2 border-t border-slate-800/80 pt-2.5">
-                      {/* College & Campus Match Badge */}
-                      <div className="flex items-center justify-between gap-1 text-[11px]">
-                        <div className="flex items-center gap-1 text-slate-300 truncate" title={item.sellerCollege || 'Campus'}>
-                          <Building2 className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-                          <span className="truncate font-medium">
-                            {item.sellerCollege
-                              ? item.sellerCollege.replace(/\s*\(.*?\)\s*/g, '')
-                              : 'College Campus'}
-                          </span>
-                        </div>
-                        {isItemMyCollege(item) ? (
-                          <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300 border border-emerald-500/40">
-                            My College
-                          </span>
-                        ) : (
-                          <span className="shrink-0 rounded bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-300 border border-cyan-500/40">
-                            {item.sellerCity || 'Nearby'}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                        <MapPin className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                        <span className="truncate">{item.location}</span>
-                      </div>
-
-                      <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    {/* Seller details badge */}
+                    <div className="pt-2 border-t border-[#E5E7EB] flex items-center justify-between text-xs">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
-                          <span className="font-semibold text-slate-200">{item.sellerName}</span>
+                          <span className="font-semibold text-[#171717] truncate">{item.sellerName}</span>
                           {item.sellerVerified && (
-                            <span title="Verified Campus Student">
-                              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                            </span>
+                            <CheckCircle2 className="h-3.5 w-3.5 text-[#16A34A] shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-1 text-amber-400">
-                          <Star className="h-3 w-3 fill-amber-400" />
-                          <span className="font-bold">{item.sellerRating}</span>
-                          <span className="text-slate-500">({item.sellerReviewsCount})</span>
-                        </div>
+                        <p className="text-[11px] text-[#6B7280] truncate flex items-center gap-1">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span>{item.location}</span>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-amber-500 shrink-0 font-bold text-xs">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span>{item.sellerRating || 4.9}</span>
                       </div>
                     </div>
                   </div>
-
-                  {/* Actions footer */}
-                  <div className="border-t border-slate-800 bg-slate-950/60 p-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setContactModalItem(item)}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 py-1.5 text-xs font-semibold text-white transition-colors"
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        <span>Contact Seller</span>
-                      </button>
-
-                      <button
-                        onClick={() => setReviewModalItem(item)}
-                        title="Rate & review seller"
-                        className="flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 p-1.5 text-slate-300 hover:text-amber-400 hover:border-amber-500/50 transition-colors"
-                      >
-                        <Star className="h-3.5 w-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => setReportModalItem(item)}
-                        title="Report suspicious listing"
-                        className="flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 p-1.5 text-slate-400 hover:text-rose-400 hover:border-rose-500/50 transition-colors"
-                      >
-                        <Flag className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Toggle status if user owns item or for demo toggle */}
-                    <div className="flex items-center justify-between pt-1">
-                      <button
-                        onClick={() =>
-                          onToggleStatus(item.id, item.status === 'available' ? 'sold' : 'available')
-                        }
-                        className="text-[10px] text-slate-400 hover:text-cyan-300 underline transition-colors"
-                      >
-                        {item.status === 'available' ? 'Mark as Sold' : 'Relist as Available'}
-                      </button>
-                      <span className="text-[10px] text-slate-500">{item.createdAt}</span>
-                    </div>
-                  </div>
                 </div>
-              );
-            })}
+
+                {/* Card Action footer */}
+                <div className="p-4 pt-0 flex items-center gap-2">
+                  <button
+                    onClick={() => setContactModalItem(item)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <span>Contact Seller</span>
+                  </button>
+
+                  <button
+                    onClick={() => setReviewModalItem(item)}
+                    className="p-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#171717] transition-colors"
+                    title="Student Reviews"
+                  >
+                    <Star className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={() => setReportModalItem(item)}
+                    className="p-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E5E7EB] text-[#6B7280] hover:text-[#DC2626] transition-colors"
+                    title="Safety Report"
+                  >
+                    <Flag className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* CONTACT / CHAT MODAL */}
+      {/* MODAL 1: CONTACT SELLER & CAMPUS PICKUP */}
       {contactModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md rounded-2xl border border-slate-700 bg-[#0f172a] shadow-2xl overflow-hidden flex flex-col h-[520px]">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">
-                  {contactModalItem.sellerName ? contactModalItem.sellerName[0] : 'S'}
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-white">{contactModalItem.sellerName || 'Campus Student'}</span>
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                  </div>
-                  <p className="text-[11px] text-slate-400">
-                    Selling: <span className="text-cyan-300">{contactModalItem.title}</span> (₹{(Number(contactModalItem.price ?? 0)).toLocaleString()})
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#171717]">Contact Seller for Campus Handover</h3>
+                <p className="text-xs text-[#6B7280]">Verified Student Pickup on Campus</p>
               </div>
               <button
                 onClick={() => setContactModalItem(null)}
-                className="rounded-lg p-1 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#F7F7F5]"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Direct call / WhatsApp bar */}
-            <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
-              <div className="flex items-center gap-1.5 text-slate-300 truncate">
-                <Building2 className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-                <span className="truncate">{contactModalItem.sellerCollege || 'Campus'} • {contactModalItem.location}</span>
+            {/* Product summary card */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB]">
+              <img
+                src={contactModalItem.imageUrl}
+                alt={contactModalItem.title}
+                className="h-12 w-12 rounded-lg object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="text-xs font-bold text-[#171717] truncate">{contactModalItem.title}</h4>
+                <p className="text-[11px] text-[#6B7280]">
+                  ₹{contactModalItem.price} • {contactModalItem.condition} • {contactModalItem.sellerCollege || 'Campus'}
+                </p>
               </div>
+            </div>
+
+            {/* Direct WhatsApp / Phone Call Option */}
+            <div className="grid grid-cols-2 gap-2.5">
               <a
-                href={`tel:${contactModalItem.contactPhone || '9876543210'}`}
-                className="flex items-center gap-1 text-emerald-400 font-semibold hover:underline shrink-0"
+                href={`tel:${contactModalItem.contactPhone || '+919876543210'}`}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#DCFCE7] text-[#16A34A] border border-green-200 text-xs font-semibold hover:bg-green-100 transition-colors"
               >
-                <Phone className="h-3 w-3" />
+                <Phone className="h-3.5 w-3.5" />
                 <span>Call Seller</span>
+              </a>
+
+              <a
+                href={`https://wa.me/${(contactModalItem.contactPhone || '919876543210').replace(/\D/g, '')}?text=Hi%20${encodeURIComponent(contactModalItem.sellerName)},%20I%20saw%20your%20listing%20for%20${encodeURIComponent(contactModalItem.title)}%20on%20CampusHub.`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] text-xs font-semibold hover:bg-blue-100 transition-colors"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>WhatsApp</span>
               </a>
             </div>
 
-            {/* Chat message bubbles */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0B1120]/60">
-              {chatHistory.map((c, idx) => (
-                <div
-                  key={idx}
-                  className={`flex flex-col ${c.sender === 'me' ? 'items-end' : 'items-start'}`}
-                >
+            {/* Campus chat box */}
+            <div className="space-y-2 border-t border-[#E5E7EB] pt-3">
+              <span className="text-xs font-semibold text-[#171717]">Campus Peer Messenger</span>
+              <div className="h-36 overflow-y-auto p-3 rounded-xl bg-[#F7F7F5] border border-[#E5E7EB] space-y-2 text-xs">
+                {chatHistory.map((c, i) => (
                   <div
-                    className={`max-w-[80%] rounded-xl px-3.5 py-2 text-xs leading-relaxed ${
-                      c.sender === 'me'
-                        ? 'bg-cyan-600 text-white rounded-br-none'
-                        : 'bg-slate-800 text-slate-200 rounded-bl-none'
-                    }`}
+                    key={i}
+                    className={`flex flex-col ${c.sender === 'me' ? 'items-end' : 'items-start'}`}
                   >
-                    {c.text}
+                    <div
+                      className={`max-w-[80%] rounded-xl px-3 py-2 text-xs ${
+                        c.sender === 'me'
+                          ? 'bg-[#2563EB] text-white'
+                          : 'bg-white text-[#171717] border border-[#E5E7EB]'
+                      }`}
+                    >
+                      {c.text}
+                    </div>
+                    <span className="text-[10px] text-[#9CA3AF] mt-0.5">{c.time}</span>
                   </div>
-                  <span className="text-[10px] text-slate-500 mt-1 px-1">{c.time}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Chat input */}
-            <form onSubmit={handleSendChat} className="border-t border-slate-800 bg-slate-950 p-3">
-              <div className="flex gap-2">
+              <form onSubmit={handleSendMessage} className="flex gap-2">
                 <input
                   type="text"
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
-                  placeholder="Type a message to the seller..."
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  placeholder="Type message or pickup meeting point..."
+                  className="flex-1 px-3.5 py-2 rounded-xl bg-white border border-[#E5E7EB] text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
                 />
                 <button
                   type="submit"
-                  className="rounded-xl bg-cyan-600 hover:bg-cyan-500 px-3.5 py-2 text-white transition-colors"
+                  className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold flex items-center justify-center"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5" />
                 </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* REVIEW MODAL */}
+      {/* MODAL 2: REVIEWS */}
       {reviewModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-[#0f172a] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white">Rate & Review Seller</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#171717]">Seller Ratings & Reviews</h3>
+                <p className="text-xs text-[#6B7280]">Verified feedback for {reviewModalItem.sellerName}</p>
+              </div>
               <button
                 onClick={() => setReviewModalItem(null)}
-                className="text-slate-400 hover:text-white"
+                className="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#F7F7F5]"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300">
-              How was your campus transaction with <span className="font-semibold text-white">{reviewModalItem.sellerName}</span> for <span className="text-cyan-300">"{reviewModalItem.title}"</span>?
-            </p>
-
-            <form onSubmit={handleSubmitReview} className="space-y-4">
+            <form onSubmit={handleSubmitReview} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2">
-                  Select Rating (1 to 5 Stars)
-                </label>
-                <div className="flex items-center gap-2">
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Rating</label>
+                <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
-                      type="button"
                       key={star}
+                      type="button"
                       onClick={() => setReviewRating(star)}
-                      className="p-1 transition-transform hover:scale-110"
+                      className="p-1 text-amber-400"
                     >
                       <Star
-                        className={`h-6 w-6 ${
-                          star <= reviewRating
-                            ? 'text-amber-400 fill-amber-400'
-                            : 'text-slate-600'
+                        className={`h-5 w-5 ${
+                          star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'
                         }`}
                       />
                     </button>
                   ))}
-                  <span className="text-sm font-bold text-amber-400 ml-2">{reviewRating} / 5</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Feedback Comment
-                </label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Your Feedback</label>
                 <textarea
                   rows={3}
+                  required
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="e.g. Prompt campus meetup, item exactly as described, friendly senior!"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  placeholder="Item condition as described? Honest seller?"
+                  className="w-full p-3 rounded-xl border border-[#E5E7EB] text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setReviewModalItem(null)}
-                  className="rounded-xl border border-slate-700 px-4 py-1.5 text-xs text-slate-300"
+                  className="px-3.5 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-[#6B7280]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-amber-500 hover:bg-amber-400 px-4 py-1.5 text-xs font-bold text-slate-950"
+                  className="px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold"
                 >
                   Submit Review
                 </button>
@@ -763,56 +618,52 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         </div>
       )}
 
-      {/* REPORT MODAL */}
+      {/* MODAL 3: SAFETY REPORT */}
       {reportModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-[#0f172a] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-rose-400 flex items-center gap-2">
-                <Flag className="h-4 w-4" />
-                <span>Report Listing</span>
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-5 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#171717]">Report Listing to Moderation</h3>
+                <p className="text-xs text-[#6B7280]">Help keep CampusHub safe and trustworthy</p>
+              </div>
               <button
                 onClick={() => setReportModalItem(null)}
-                className="text-slate-400 hover:text-white"
+                className="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#F7F7F5]"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300">
-              Help keep CampusHub safe. Reporting <span className="font-semibold text-white">"{reportModalItem.title}"</span> flags it for moderator review.
-            </p>
-
-            <form onSubmit={handleSubmitReport} className="space-y-4">
+            <form onSubmit={handleSubmitReport} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Reason for Reporting
-                </label>
+                <label className="block text-xs font-semibold text-[#171717] mb-1">Reason for Report</label>
                 <select
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:border-rose-500 focus:outline-none"
+                  required
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs text-[#171717] focus:outline-none focus:border-[#2563EB]"
                 >
-                  <option value="Commercial reseller / Non-student listing">Commercial reseller / Non-student listing</option>
-                  <option value="Misleading price or fake description">Misleading price or fake description</option>
-                  <option value="Prohibited or inappropriate item">Prohibited or inappropriate item</option>
-                  <option value="Copyright or unauthorized material">Copyright or unauthorized material</option>
-                  <option value="Other security concern">Other security concern</option>
+                  <option value="">Select a reason...</option>
+                  <option value="Prohibited or illegal item">Prohibited or illegal item</option>
+                  <option value="Misleading price or description">Misleading price or description</option>
+                  <option value="Not a genuine university student">Not a genuine university student</option>
+                  <option value="Off-campus commercial seller">Off-campus commercial seller</option>
+                  <option value="Copyright infringement">Copyright infringement</option>
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setReportModalItem(null)}
-                  className="rounded-xl border border-slate-700 px-4 py-1.5 text-xs text-slate-300"
+                  className="px-3.5 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-[#6B7280]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-rose-600 hover:bg-rose-500 px-4 py-1.5 text-xs font-semibold text-white"
+                  className="px-4 py-2 rounded-xl bg-[#DC2626] text-white text-xs font-semibold"
                 >
                   Submit Report
                 </button>
